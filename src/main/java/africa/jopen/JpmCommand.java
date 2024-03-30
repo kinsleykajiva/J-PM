@@ -3,6 +3,7 @@ package africa.jopen;
 import africa.jopen.models.AppModel;
 import africa.jopen.models.CacheModel;
 import africa.jopen.utils.XFilesUtils;
+import africa.jopen.utils.XHttpUtils;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -140,8 +141,14 @@ public class JpmCommand implements Runnable {
             System.out.println("Setting up app");
             XFilesUtils.getAppFolderPath();
             XFilesUtils.getCacheFile();
+            /*try{
+                XHttpUtils.downloadFile("https://cdn.pixabay.com/photo/2023/08/19/13/42/water-8200502_1280.jpg",XFilesUtils.getAppFolderPath());
+            }catch (Exception e){
+                e.printStackTrace();
+            }*/
         }
-        animateDownload();
+       // animateDownload();
+       
         
         
         /*else {
