@@ -1,5 +1,6 @@
 package africa.jopen.process;
 
+import africa.jopen.utils.XLogger;
 import africa.jopen.utils.XSystemUtils;
 
 import java.io.BufferedReader;
@@ -11,8 +12,8 @@ import java.util.logging.Logger;
 
 public class AppProcess {
 	 Logger log = Logger.getLogger(AppProcess.class.getName());
-	
-	private Integer      id          = 0;
+	private XLogger xLogger ;
+	private Integer id      = 0;
 	private String       name        ="--";
 	private String       version     ="0.0";
 	private String       description = "No description";
@@ -22,6 +23,7 @@ public class AppProcess {
 	
 	public void runApp(String appFileName,String args){
 		System.out.println("Running app " + getName() + " version " + getVersion());
+		xLogger = new XLogger(appFileName);
 		ProcessBuilder processBuilder = new ProcessBuilder();
 		String os = System.getProperty("os.name").toLowerCase();
 		
@@ -36,21 +38,29 @@ public class AppProcess {
 		}
 		
 		processBuilder.redirectErrorStream(true);
-		try{
+		try {
 			Process process = processBuilder.start();
 			try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
 				String line;
 				while ((line = reader.readLine()) != null) {
-					System.out.println(line);
+//					System.out.println(line);
+					xLogger.log(line);
 				}
-				int exitCode = process.waitFor();
-			} catch (InterruptedException e) {
-				log.severe("Error running app " + getName() + " " + e);
 			}
 			
-		} catch (IOException e){
-			log.severe("Error running app " + getName() + " " + e);
+			try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+				String errorLine;
+				while ((errorLine = errorReader.readLine()) != null) {
+					
+					xLogger.logError(errorLine);
+				}
+			}
+			
+			int exitCode = process.waitFor();
+		} catch (IOException | InterruptedException e) {
+			log.severe("Error running app " + getName() + ": " + e.getMessage());
 		}
+		
 		
 	}
 	
