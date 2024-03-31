@@ -74,6 +74,26 @@
   </dependencies>
   <build>
     <plugins>
+
+
+
+      <plugin>
+        <groupId>org.graalvm.buildtools</groupId>
+        <artifactId>native-maven-plugin</artifactId>
+        <configuration>
+          <skip>false</skip>
+          <buildArgs>
+            -H:-CheckToolchain
+            --no-fallback
+            --initialize-at-build-time=ch.qos.logback
+            --initialize-at-build-time=org.slf4j
+          </buildArgs>
+          <mainClass>africa.jopen.JpmCommand</mainClass>
+        </configuration>
+      </plugin>
+
+
+
       <plugin>
         <groupId>io.micronaut.maven</groupId>
         <artifactId>micronaut-maven-plugin</artifactId>
