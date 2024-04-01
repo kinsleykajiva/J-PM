@@ -30,9 +30,9 @@ public class TablePrinter {
 		}
 		
 		// Print header
-		printSeparator(columnWidths);
+		printSeparator(columnWidths, "┌", "┬", "┐");
 		printRow(header, columnWidths);
-		printSeparator(columnWidths);
+		printSeparator(columnWidths, "├", "┼", "┤");
 		
 		// Print data
 		for (String[] row : data) {
@@ -40,27 +40,29 @@ public class TablePrinter {
 		}
 		
 		// Print bottom border
-		printSeparator(columnWidths);
+		printSeparator(columnWidths, "└", "┴", "┘");
 	}
 	
 	public static void printRow(String[] rowData, int[] columnWidths) {
-		StringBuilder rowBuilder = new StringBuilder("|");
+		StringBuilder rowBuilder = new StringBuilder("│");
 		for (int i = 0; i < rowData.length; i++) {
 			if (rowData[i].equals("online")) {
 				// Print in green if cell value is "online"
-				rowBuilder.append(String.format("\u001B[32m %-" + columnWidths[i] + "s \u001B[0m|", rowData[i]));
+				rowBuilder.append(String.format("\u001B[32m %-" + columnWidths[i] + "s \u001B[0m│", rowData[i]));
 			} else {
-				rowBuilder.append(String.format(" %-" + columnWidths[i] + "s |", rowData[i]));
+				rowBuilder.append(String.format(" %-" + columnWidths[i] + "s │", rowData[i]));
 			}
 		}
 		System.out.println(rowBuilder);
 	}
 	
-	public static void printSeparator(int[] columnWidths) {
-		StringBuilder separatorBuilder = new StringBuilder("+");
+	public static void printSeparator(int[] columnWidths, String leftCorner, String middleCorner, String rightCorner) {
+		StringBuilder separatorBuilder = new StringBuilder(leftCorner);
 		for (int width : columnWidths) {
-			separatorBuilder.append("-".repeat(width + 2)).append("+");
+			separatorBuilder.append("─".repeat(width + 2)).append(middleCorner);
 		}
+		separatorBuilder.deleteCharAt(separatorBuilder.length() - 1); // Remove the last middle corner
+		separatorBuilder.append(rightCorner);
 		System.out.println(separatorBuilder);
 	}
 }
