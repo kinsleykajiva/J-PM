@@ -10,7 +10,7 @@ import io.helidon.config.Config;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
 
-
+import static africa.jopen.utils.XSystemUtils.getPIDRAMUsage;
 
 
 /**
@@ -52,7 +52,7 @@ public class Main {
         String app  ="C:\\Users\\Kinsl\\IdeaProjects\\jar-demo\\target\\jar-demo-1.0-SNAPSHOT.jar";
         
         String app1  ="C:\\Users\\Kinsl\\IdeaProjects\\jar-demo\\target\\test-app.js";
-        Thread.ofVirtual().start(() -> {
+        /*Thread.ofVirtual().start(() -> {
         AppProcess appProcess = new AppProcess();
         appProcess.setName("jar-demo-1.0-SNAPSHOT");
         appProcess.runApp(app,"");
@@ -64,7 +64,10 @@ public class Main {
         appProcess1.setName("js-test");
         appProcess1.runApp(app1,"");
             appProcess1= null;
-        });
+        });*/
+        
+     //   System.out.println( getPIDRAMUsage("13504"));;
+//        getPIDRAMUsage("10");
         
         
         /*for (int i = 0; i < 10; i++) {
@@ -79,10 +82,12 @@ public class Main {
             });
             System.out.println("done " + i);
         }*/
+        
 
     }
-
-
+   
+    
+   
     /**
      * Updates HTTP Routing.
      */

@@ -8,25 +8,31 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import static africa.jopen.utils.XSystemUtils.getPIDRAMUsage;
+
 public class AppProcess {
 	Logger log = Logger.getLogger(AppProcess.class.getName());
-	private XLogger      xLogger;
-	private Integer      id          = 0;
-	private String       name        = "--";
-	private String       version     = "0.0";
-	private String       description = "No description";
-	private List<String> tags        = new ArrayList<>();
+	private       XLogger        xLogger;
+	private       Integer        id             = 0;
+	private       String         name           = "--";
+	private       String         version        = "0.0";
+	private       String         description    = "No description";
+	private       List<String>   tags           = new ArrayList<>();
 	private       String         exeCommand     = "";
 	private final ProcessBuilder processBuilder = new ProcessBuilder();
+	private       Long           pid            = null;
+	private       Instant        startTime      = null;
 	
 	public void runApp( String appFileName, String args ) {
-	
+		
 		xLogger = new XLogger(name);
-		String         os             = System.getProperty("os.name").toLowerCase();
+		String os = System.getProperty("os.name").toLowerCase();
 		
 		if (appFileName.endsWith("jar")) {
 			if (XSystemUtils.isSystemJavaFound()) {
@@ -79,7 +85,7 @@ public class AppProcess {
 				}
 			});
 			getProcessMetadata(process);
-			getMemoryUsage();
+			//getMemoryUsage();
 			int exitCode = process.waitFor();
 			if (exitCode != 0) {
 				xLogger.log("Process was terminated by an external program with exit code: " + exitCode);
@@ -98,13 +104,76 @@ public class AppProcess {
 		}
 	}
 	
+	public Long getPid() {
+		return pid;
+	}
+	
+	public String getProcessRamUse(){
+		 return  getPIDRAMUsage(String.valueOf(pid));
+	}
+	
+	public String getProcessUpTime() {
+		if (startTime == null) {
+			return null;
+		}
+		
+		Duration uptime  = Duration.between(startTime, Instant.now());
+		long     years   = uptime.toDaysPart() / 365;
+		long     months  = (uptime.toDaysPart() % 365) / 30;
+		long     weeks   = (uptime.toDaysPart() % 365) % 30 / 7;
+		long     days    = (uptime.toDaysPart() % 365) % 30 % 7;
+		long     hours   = uptime.toHoursPart() % 24;
+		long     minutes = uptime.toMinutesPart() % 60;
+		long     seconds = uptime.toSecondsPart();
+		
+		StringBuilder uptimeString = new StringBuilder();
+		
+		if (years > 0) {
+			uptimeString.append(years).append(" year").append(years > 1 ? "s" : "");
+			months = months % 12; // Subtract the months already included in years
+			if (months > 0) {
+				uptimeString.append(", ").append(months).append(" month").append(months > 1 ? "s" : "");
+			}
+		} else if (months > 0) {
+			uptimeString.append(months).append(" month").append(months > 1 ? "s" : "");
+		}
+		
+		if (weeks > 0) {
+			uptimeString.append(", ").append(weeks).append(" week").append(weeks > 1 ? "s" : "");
+		}
+		
+		if (days > 0) {
+			uptimeString.append(", ").append(days).append(" day").append(days > 1 ? "s" : "");
+		}
+		
+		if (hours > 0) {
+			uptimeString.append(", ").append(hours).append(" hour").append(hours > 1 ? "s" : "");
+		}
+		
+		if (minutes > 0) {
+			uptimeString.append(", ").append(minutes).append(" minute").append(minutes > 1 ? "s" : "");
+		}
+		
+		if (seconds > 0 || uptimeString.isEmpty()) {
+			uptimeString.append(seconds).append(" second").append(seconds > 1 ? "s" : "");
+		}
+		
+		System.out.println("Process uptime: " + uptimeString);
+		return uptimeString.toString();
+	}
+	
 	private void getProcessMetadata( Process process ) {
-		long pid = process.pid();
+		
 		process.info().totalCpuDuration();
-		System.out.println("Process ID: " + pid);
+		pid = process.pid();
+		if (process.info().startInstant().isPresent()) {
+			startTime = process.info().startInstant().get();
+		}
+		
+		/*System.out.println("Process ID: " + pid);
 		System.out.println("Process process.info().totalCpuDuration(): " + process.info().totalCpuDuration());
 		System.out.println("Process process.info().commandLine(): " + process.info().commandLine());
-		System.out.println("Process process.info().startInstant(): " + process.info().startInstant());
+		System.out.println("Process process.info().startInstant(): " + process.info().startInstant());*/
 		// You can retrieve more metadata here as needed
 	}
 	
