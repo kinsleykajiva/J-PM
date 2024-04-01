@@ -49,6 +49,24 @@ public class Main {
 
         System.out.println("WEB server is up! http://localhost:" + server.port() + "/simple-greet");
         
+        String app  ="C:\\Users\\Kinsl\\IdeaProjects\\jar-demo\\target\\jar-demo-1.0-SNAPSHOT.jar";
+        
+        String app1  ="C:\\Users\\Kinsl\\IdeaProjects\\jar-demo\\target\\test-app.js";
+        Thread.ofVirtual().start(() -> {
+        AppProcess appProcess = new AppProcess();
+        appProcess.setName("jar-demo-1.0-SNAPSHOT");
+        appProcess.runApp(app,"");
+            
+            appProcess=null;
+        });
+        Thread.ofVirtual().start(() -> {
+        AppProcess appProcess1 = new AppProcess();
+        appProcess1.setName("js-test");
+        appProcess1.runApp(app1,"");
+            appProcess1= null;
+        });
+        
+        
         /*for (int i = 0; i < 10; i++) {
             Thread.ofVirtual().start(() -> {
                 try {
