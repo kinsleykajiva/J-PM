@@ -82,7 +82,6 @@ public class AppProcess {
 			getMemoryUsage();
 			int exitCode = process.waitFor();
 			if (exitCode != 0) {
-				System.out.println("Process was terminated by an external program with exit code: " + exitCode);
 				xLogger.log("Process was terminated by an external program with exit code: " + exitCode);
 				xLogger.logError("Process was terminated by an external program with exit code: " + exitCode);
 				outputLoggerThread.interrupt(); // cancel input reader thread
@@ -90,7 +89,6 @@ public class AppProcess {
 				Thread.currentThread().interrupt();
 				
 			} else {
-				System.out.println("Process exited normally");
 				xLogger.log("Process exited normally");
 				Thread.currentThread().interrupt();
 			}
