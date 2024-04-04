@@ -25,10 +25,13 @@ public class AppProcess {
 	private       String         description    = "No description";
 	private       List<String>   tags           = new ArrayList<>();
 	private       String         exeCommand     = "";
+	private       String         sdkPath     = "";
 	private final ProcessBuilder processBuilder = new ProcessBuilder();
 	private       Long           pid            = null;
-	private       Instant        startTime      = null;
-	
+	private       Instant startTime      = null;
+	private Thread parentThread;
+	private Thread childOutputLoggerThread;
+	private Thread childErrorOutputLoggerThread;
 	public void runApp( String appFileName, String args ) {
 		
 		xLogger = new XLogger(name);
@@ -57,59 +60,137 @@ public class AppProcess {
 		executeProcess();
 	}
 	
-	private void executeProcess() {
-		try {
-			Process process = processBuilder.start();
-			xLogger.log("Running app " + getName() + " version " + getVersion());
-			
-			var outputLoggerThread = Thread.ofVirtual().start(() -> {
-				try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-					String line;
-					while ((line = reader.readLine()) != null) {
-						xLogger.log(line);
+	
+	
+	public boolean stop() {
+		
+		ProcessHandle process = ProcessHandle.of(pid).orElseThrow(() ->
+				new IllegalArgumentException("Process with PID " + pid + " not found"));
+		// Destroy the process forcibly
+		boolean isDestroyed = process.destroyForcibly();
+		if (isDestroyed) {
+			System.out.println("Process with PID " + pid + " has been killed successfully.");
+			return  true;
+		} else {
+			System.out.println("Failed to kill process with PID " + pid);
+			if(parentThread == null){
+				log.info("App " + getName() + " version " + getVersion() + " is not running");
+				return false;
+			}
+			interruptThreads();
+			return true;
+		}
+		
+	}
+	public void restart() {
+		if(parentThread == null){
+			log.info("App " + getName() + " version " + getVersion() + " is not running");
+			return;
+		}
+		interruptThreads();
+		
+		
+		xLogger.log("Restarting app " + getName() + " version " + getVersion());
+		if (pid != null) {
+			// SUCCESS: The process with PID 3084 has been terminated.
+			String os = System.getProperty("os.name").toLowerCase();
+			if (os.startsWith("win")) {
+				var res = XSystemUtils.bashExecute("taskkill /PID " + pid + " /F");
+				if (!res.isEmpty()) {
+					for (String line : res) {
+						if (line.isEmpty()) {
+							continue;
+						}
+						log.info(line);
+						if (line.contains("SUCCESS: The process with PID " + pid + " has been terminated.")) {
+							executeProcess();
+						}
 					}
-				} catch (IOException e) {
-					log.severe("Error reading process input stream: " + e.getMessage());
 				}
-			});
-			var errorOutputLoggerThread = Thread.ofVirtual().start(() -> {
-				
-				try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-					String errorLine;
-					while ((errorLine = errorReader.readLine()) != null) {
-						
-						xLogger.logError(errorLine);
+			} else if (os.startsWith("linux") || os.startsWith("mac")) {
+				List<String> res = XSystemUtils.bashExecute("kill -9 " + pid);
+				if (!res.isEmpty()) {
+					for (String line : res) {
+						if (line.isEmpty()) {
+							continue;
+						}
+						log.info(line);
+						if (line.contains("No such process") || line.contains("Operation not permitted")) {
+							log.severe("Failed to kill process with PID " + pid + ": " + line);
+						} else {
+							executeProcess();
+							
+						}
 					}
-				} catch (IOException e) {
-					log.severe("Error reading process error stream: " + e.getMessage());
 				}
-			});
-			getProcessMetadata(process);
-			//getMemoryUsage();
-			int exitCode = process.waitFor();
-			if (exitCode != 0) {
-				xLogger.log("Process was terminated by an external program with exit code: " + exitCode);
-				xLogger.logError("Process was terminated by an external program with exit code: " + exitCode);
-				outputLoggerThread.interrupt(); // cancel input reader thread
-				errorOutputLoggerThread.interrupt(); // cancel input reader thread
-				Thread.currentThread().interrupt();
-				
-			} else {
-				xLogger.log("Process exited normally");
-				Thread.currentThread().interrupt();
 			}
 			
-		} catch (IOException | InterruptedException e) {
-			log.severe("Error running app " + getName() + ": " + e.getMessage());
+		} else {
+			log.severe("PID is null");
 		}
+		
+	}
+	
+	private void startChildThreads(Process process) {
+		childOutputLoggerThread = Thread.ofVirtual().start(() -> {
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+				String line;
+				while ((line = reader.readLine()) != null) {
+					xLogger.log(line);
+				}
+			} catch (IOException e) {
+				log.severe("Error reading process input stream: " + e.getMessage());
+			}
+		});
+		childErrorOutputLoggerThread = Thread.ofVirtual().start(() -> {
+			
+			try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+				String errorLine;
+				while ((errorLine = errorReader.readLine()) != null) {
+					
+					xLogger.logError(errorLine);
+				}
+			} catch (IOException e) {
+				log.severe("Error reading process error stream: " + e.getMessage());
+			}
+		});
+	}
+	
+	
+	
+	private void executeProcess() {
+		
+		parentThread = Thread.ofVirtual().start(() -> {
+			
+			try {
+				Process process = processBuilder.start();
+				xLogger.log("Running app " + getName() + " version " + getVersion());
+				startChildThreads(process);
+				
+				getProcessMetadata(process);
+				int exitCode = process.waitFor();
+				if (exitCode != 0) {
+					xLogger.log("Process was terminated by an external program with exit code: " + exitCode);
+					xLogger.logError("Process was terminated by an external program with exit code: " + exitCode);
+					interruptThreads();
+					
+				} else {
+					xLogger.log("Process exited normally");
+					interruptThreads();
+				}
+				
+			} catch (IOException | InterruptedException e) {
+				log.severe("Error running app " + getName() + ": " + e.getMessage());
+			}
+		});
 	}
 	
 	public Long getPid() {
 		return pid;
 	}
 	
-	public String getProcessRamUse(){
-		 return  getPIDRAMUsage(String.valueOf(pid));
+	public String getProcessRamUse() {
+		return getPIDRAMUsage(String.valueOf(pid));
 	}
 	
 	public String getProcessUpTime() {
@@ -169,14 +250,18 @@ public class AppProcess {
 		if (process.info().startInstant().isPresent()) {
 			startTime = process.info().startInstant().get();
 		}
-		
-		/*System.out.println("Process ID: " + pid);
-		System.out.println("Process process.info().totalCpuDuration(): " + process.info().totalCpuDuration());
-		System.out.println("Process process.info().commandLine(): " + process.info().commandLine());
-		System.out.println("Process process.info().startInstant(): " + process.info().startInstant());*/
-		// You can retrieve more metadata here as needed
 	}
-	
+	private void interruptThreads() {
+		if (parentThread != null) {
+			parentThread.interrupt();
+		}
+		if (childOutputLoggerThread != null) {
+			childOutputLoggerThread.interrupt();
+		}
+		if (childErrorOutputLoggerThread != null) {
+			childErrorOutputLoggerThread.interrupt();
+		}
+	}
 	private void getMemoryUsage() {
 		MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
 		System.out.println("Heap Memory Usage: " + memoryBean.getHeapMemoryUsage());
@@ -193,6 +278,14 @@ public class AppProcess {
 	
 	public String getName() {
 		return name;
+	}
+	
+	public String getSdkPath() {
+		return sdkPath;
+	}
+	
+	public void setSdkPath( String sdkPath ) {
+		this.sdkPath = sdkPath;
 	}
 	
 	public void setName( String name ) {

@@ -10,6 +10,9 @@ import io.helidon.config.Config;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
 
+import java.util.concurrent.TimeUnit;
+
+import static africa.jopen.utils.XSystemUtils.checkIfProcessExists;
 import static africa.jopen.utils.XSystemUtils.getPIDRAMUsage;
 
 
@@ -52,13 +55,58 @@ public class Main {
         String app  ="C:\\Users\\Kinsl\\IdeaProjects\\jar-demo\\target\\jar-demo-1.0-SNAPSHOT.jar";
         
         String app1  ="C:\\Users\\Kinsl\\IdeaProjects\\jar-demo\\target\\test-app.js";
-        /*Thread.ofVirtual().start(() -> {
+        
+        /*
         AppProcess appProcess = new AppProcess();
         appProcess.setName("jar-demo-1.0-SNAPSHOT");
         appProcess.runApp(app,"");
+        
+       
+        
+        int attempts = 0;
+        int maxAttempts = 5;
+        System.out.println("now here -" + appProcess.getPid());
+        Long pid = appProcess.getPid();
+        
+        while (pid == null && attempts < maxAttempts) {
+            System.out.println("now here - " + pid);
+            attempts++;
+            try {
+                TimeUnit.SECONDS.sleep(1); // Delay for 1 second
+                System.out.println("now here -" + appProcess.getPid());
+             
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            pid = appProcess.getPid();
+        }
+        
+        if (pid != 0) {
+            System.out.println("Process started with PID: " + pid);
+            try {
+                TimeUnit.SECONDS.sleep(5); // Delay for 1 second
+                System.out.println("fff now here -" + appProcess.stop());
+                System.out.println("xxx here -" + checkIfProcessExists(pid));
+                
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("Failed to retrieve process ID after " + maxAttempts + " attempts.");
+        }*/
+    
+        
+        // tasklist /fi "PID eq 13056" /fo list
+        //sc.exe stop <service_name> force
+        /*Thread.ofVirtual().start(() -> {
+            AppProcess appProcess = new AppProcess();
+            appProcess.setName("jar-demo-1.0-SNAPSHOT");
+            appProcess.runApp(app,"");
             
-            appProcess=null;
-        });
+            System.out.println("now here");
+        });*/
+        
+        /*
         Thread.ofVirtual().start(() -> {
         AppProcess appProcess1 = new AppProcess();
         appProcess1.setName("js-test");

@@ -18,6 +18,8 @@
     <release.version>21</release.version>
     <micronaut.version>4.3.6</micronaut.version>
     <exec.mainClass>africa.jopen.JpmCommand</exec.mainClass>
+    <maven.compiler.source>22</maven.compiler.source>
+    <maven.compiler.target>22</maven.compiler.target>
   </properties>
 
   <repositories>
