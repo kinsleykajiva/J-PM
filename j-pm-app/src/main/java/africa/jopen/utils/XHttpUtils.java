@@ -1,19 +1,18 @@
 package africa.jopen.utils;
-import javax.naming.Context;
+
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.Authenticator;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.http.HttpClient;
-import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
@@ -21,8 +20,65 @@ import java.util.function.LongConsumer;
 
 public class XHttpUtils {
 	
+	private static String url = "http://localhost:8080/app";
 	
-	public static void downloadFile(String url, String saveDir) throws IOException, InterruptedException {
+	public static String getRequest( String endpoint ) {
+		try {
+			System.out.println(url + "/" + endpoint);
+			HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create(url + "/" + endpoint))
+					.header("Authorization", "Bearer qwYTYRTYRTYRTYT12")
+					.header("Content-Type", "application/json")
+					
+					.GET()
+					.build();
+			HttpResponse<String> response;
+			try (HttpClient client = HttpClient.newBuilder()
+					.version(HttpClient.Version.HTTP_1_1)
+					.followRedirects(HttpClient.Redirect.NORMAL)
+					.connectTimeout(Duration.ofSeconds(120))
+					.build()) {
+				response = client.send(request, HttpResponse.BodyHandlers.ofString());
+			}
+			//System.out.println(response.statusCode());
+			//System.out.println(response.body());
+			return response.body();
+		} catch (IOException | InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		
+		return null;
+	}
+	
+	public static String postRequest( String endpoint, String jsonPayload ) {
+		try {
+			HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create(url + "/" + endpoint))
+					.header("Authorization", "Bearer qwYTYRTYRTYRTYT12")
+					.header("Content-Type", "application/json")
+					.POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+					.build();
+			HttpResponse<String> response;
+			try (HttpClient client = HttpClient.newBuilder()
+					.version(HttpClient.Version.HTTP_1_1)
+					.followRedirects(HttpClient.Redirect.NORMAL)
+					.connectTimeout(Duration.ofSeconds(120))
+					.build()) {
+				response = client.send(request, HttpResponse.BodyHandlers.ofString());
+			}
+			System.out.println(response.statusCode());
+			System.out.println(response.body());
+			return response.body();
+		} catch (IOException | InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		
+		return null;
+	}
+	
+	public static void downloadFile( String url, String saveDir ) throws IOException, InterruptedException {
 		Path               saveFilePath;
 		HttpResponse<Path> response;
 		try (HttpClient client = HttpClient.newBuilder()
@@ -54,7 +110,7 @@ public class XHttpUtils {
 		}
 	}
 	
-	private static String getFileNameFromUrl(String url) {
+	private static String getFileNameFromUrl( String url ) {
 		try {
 			return new File(new URL(url).getPath()).getName();
 		} catch (MalformedURLException e) {
@@ -65,19 +121,19 @@ public class XHttpUtils {
 	}
 	
 	private static <T> HttpResponse.BodyHandler<T> callbackBodyHandler(
-			int interval, LongConsumer callback, HttpResponse.BodyHandler<T> handler) {
+			int interval, LongConsumer callback, HttpResponse.BodyHandler<T> handler ) {
 		return info -> new HttpResponse.BodySubscriber<T>() {
 			private final HttpResponse.BodySubscriber<T> delegateSubscriber = handler.apply(info);
-			private long receivedBytes = 0;
-			private long calledBytes = 0;
+			private       long                           receivedBytes      = 0;
+			private       long                           calledBytes        = 0;
 			
 			@Override
-			public void onSubscribe(Flow.Subscription subscription) {
+			public void onSubscribe( Flow.Subscription subscription ) {
 				delegateSubscriber.onSubscribe(subscription);
 			}
 			
 			@Override
-			public void onNext(List<ByteBuffer> item) {
+			public void onNext( List<ByteBuffer> item ) {
 				receivedBytes += item.stream().mapToLong(ByteBuffer::capacity).sum();
 				if (receivedBytes - calledBytes > interval) {
 					callback.accept(receivedBytes);
@@ -87,7 +143,7 @@ public class XHttpUtils {
 			}
 			
 			@Override
-			public void onError(Throwable throwable) {
+			public void onError( Throwable throwable ) {
 				delegateSubscriber.onError(throwable);
 			}
 			
@@ -102,9 +158,10 @@ public class XHttpUtils {
 			}
 		};
 	}
-	private static void printDownloadProgress(long bytesRead, long contentLength, int totalChunks) {
-		int progress = (int) (bytesRead * 100 / contentLength);
-		int chunkSize = progress / totalChunks;
+	
+	private static void printDownloadProgress( long bytesRead, long contentLength, int totalChunks ) {
+		int progress        = (int) (bytesRead * 100 / contentLength);
+		int chunkSize       = progress / totalChunks;
 		int completedChunks = chunkSize;
 		
 		// Build progress bar
@@ -120,8 +177,6 @@ public class XHttpUtils {
 		
 		System.out.print("\r" + progressbar + " " + progress + "%");
 	}
-
-	
 	
 	
 }

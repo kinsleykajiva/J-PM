@@ -1,8 +1,12 @@
 package africa.jopen;
 
+import africa.jopen.utils.TablePrinter;
 import africa.jopen.utils.XFilesUtils;
+import africa.jopen.utils.XHttpUtils;
 import africa.jopen.utils.XSystemUtils;
 import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.serde.ObjectMapper;
+import org.json.JSONObject;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -41,6 +45,10 @@ public class JpmCommand implements Runnable {
 		
 		if (args.length > 0) {
 			String[] exec = { "-v", "-c", "install", "--name", "", "--app", "" };
+			if (args[0].equals("ls")) { // ls
+				exec[2] = "ls";
+				exec[6] = "";
+			}
 			if (args[0].equals("start")) { // start app.js or start app.jar
 				String file = args[1];
 				// get current directory
@@ -50,6 +58,7 @@ public class JpmCommand implements Runnable {
 				exec[6] = currentDirectory + File.separator + file;
 				
 			}
+			
 			System.out.println("::1:::" + currentDirectory);
 			
 			
@@ -176,6 +185,56 @@ public class JpmCommand implements Runnable {
 		if (command.equalsIgnoreCase("stop")) {
 			System.out.println("Stopping...");
 		}
+		if (command.equalsIgnoreCase("ls")) {
+			System.out.println("listing...");
+			String response = XHttpUtils.getRequest("");
+			// parse response usin jackson library
+			if(response == null || response.isEmpty()){
+				System.err.println("::::::::::::Failed to get apps.Please check Health Setup::::::::::::");
+				System.err.println("::::::::::::Run \"jpm health\"::::::::::::");
+				return;
+			}
+			System.out.println(response);
+			JSONObject  jsonObject = new JSONObject(response);
+			
+			if(jsonObject.getBoolean("success")){
+			var data = jsonObject.getJSONObject("data");
+			var apps=data.getJSONArray("apps");
+			
+			var appSize = apps.length();
+				String[][] data1 = new String[appSize][];
+				for (int i = 0; i < appSize; i++) {
+					JSONObject app = apps.getJSONObject(i);
+					String[] rowData = {
+							app.getString("id"),
+							app.getString("name"),
+							app.getString("version"),
+							app.getString("pid"),
+							app.getString("uptime"),
+							app.getString("status"),
+							app.getString("cpu"),
+							app.getString("mem"),
+							app.getString("user")
+					};
+					
+					// Assign the String array to the corresponding index in the data1 array
+					data1[i] = rowData;
+				}
+				new TablePrinter(data1);
+				if(appSize <1){
+					
+					System.out.println("\u001B[31m\u2713 No apps found/Running\u001B[0m");
+					System.out.println("\u001B[32m\u2713 No apps found/Running\u001B[0m");
+					System.out.println("\u001B[32m\u2753 No apps found/Running\u001B[0m");
+					
+				}
+			}else{
+//				System.out.println("Failed to get apps " + jsonObject.getString("message"));
+				System.out.println("\u001B[32m\u2753 "+"Failed to get apps " + jsonObject.getString("message")+"\u001B[0m");
+				
+			}
+			
+		}
 		
 		
 		if (command.equalsIgnoreCase("install")) {
@@ -188,6 +247,10 @@ public class JpmCommand implements Runnable {
                 e.printStackTrace();
             }*/
 		}
+		
+		
+	//	printAlignedErrorMessage("❌ Failed to get apps.\nPlease check Health Setup.");
+		
 		// animateDownload();
        
         
@@ -196,4 +259,26 @@ public class JpmCommand implements Runnable {
             System.out.println("Hi, " + nameOrCommand + "!");
         }*/
 	}
+	public static void printAlignedErrorMessage(String message) {
+		// Determine the length of the longest line in the message
+		int maxLength = 0;
+		String[] lines = message.split("\\n");
+		for (String line : lines) {
+			maxLength = Math.max(maxLength, line.length());
+		}
+		
+		// Print the error message with proper alignment
+		System.err.println("\u001B[31m╔" + "═".repeat(maxLength + 2) + "╗");
+		for (String line : lines) {
+			int paddingLength = maxLength - line.length();
+			String leftPadding = " ".repeat(paddingLength / 2);
+			String rightPadding = " ".repeat(paddingLength - paddingLength / 2);
+			System.err.println("║ " + leftPadding + line + rightPadding + " ║");
+		}
+		System.err.println("╚" + "═".repeat(maxLength + 2) + "╝\u001B[0m");
+	}
+	
+	
+	
+	
 }
