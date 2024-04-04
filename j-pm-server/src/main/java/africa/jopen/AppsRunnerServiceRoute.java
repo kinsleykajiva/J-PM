@@ -6,11 +6,11 @@ import io.helidon.webserver.http.HttpRules;
 import io.helidon.webserver.http.HttpService;
 import io.helidon.webserver.http.ServerRequest;
 import io.helidon.webserver.http.ServerResponse;
-import jakarta.json.Json;
-import jakarta.json.JsonBuilderFactory;
-import jakarta.json.JsonObject;
+import jakarta.json.*;
+import jakarta.json.stream.JsonParser;
 import org.json.JSONObject;
 
+import java.io.StringReader;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -75,7 +75,8 @@ public class AppsRunnerServiceRoute implements HttpService {
 	 */
 	private void index( ServerRequest request, ServerResponse response ) {
 		JSONObject responseObj = new JSONObject();
-		sendSuccessResponse(response, "World","");
+		responseObj.put("apps", appModelList);
+		sendSuccessResponse(response, "running apps",responseObj.toString());
 	}
 	
 	private void runApp(ServerRequest request, ServerResponse response) {
@@ -216,11 +217,15 @@ public class AppsRunnerServiceRoute implements HttpService {
 	}
 	
 	private void sendSuccessResponse( ServerResponse response, String message,String data ) {
-		JsonObject successObject = Json.createObjectBuilder()
-				.add("success", true)
-				.add("message", message)
-				.add("data", data)
-				.build();
+	
+		JsonReader jsonReader = Json.createReader(new StringReader(data));
+		JsonObject jsonData = jsonReader.readObject();
+		JsonObjectBuilder builder    = Json.createObjectBuilder();
+
+		builder.add("success", true);
+		builder.add("message", message);
+		builder.add("data", jsonData);
+		JsonObject successObject = builder.build();
 		response.send(successObject);
 	}
 	
