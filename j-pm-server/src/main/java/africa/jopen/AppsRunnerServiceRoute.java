@@ -10,6 +10,7 @@ import jakarta.json.*;
 import jakarta.json.stream.JsonParser;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.StringReader;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -86,23 +87,36 @@ public class AppsRunnerServiceRoute implements HttpService {
 		JSONObject responseObj = new JSONObject();
 		JSONObject body = new JSONObject(bodyText);
 		
+		int id = body.optInt("appName", 0);// this is an update to restart
+		boolean isRestart = body.optBoolean("isRestart", false);
 		String appName = body.optString("appName", null);
 		Long pidValue = body.optLong("pid", 0);
 		String filePath = body.optString("filePath", null);
 		String sdkPath = body.optString("sdkPath", null);
 		String description = body.optString("description", null);
 		String version = body.optString("version", null);
-		
-		if (appName == null || filePath == null || sdkPath == null || description == null || version == null) {
-			sendErrorResponse(response, "Missing required fields in the request body");
+		// test if file exists at all
+		var file = new File(filePath);
+		if(!file.exists()){
+			sendErrorResponse(response, "File not found");
 			return;
 		}
 		
 		boolean appExists = appModelList.stream().anyMatch(appModel ->
-				appModel.getName().equals(appName) || Objects.equals(appModel.getPid(), pidValue)
+				appModel.getName().equals(appName) || appModel.getId()== id
 		);
 		
-		if (appExists) {
+		if (appExists && !isRestart) {
+			Optional<AppProcess> existingAppProcess = appModelList.stream()
+					.filter(x -> x.getName().equals(appName))
+					.findFirst();
+			if(existingAppProcess.isPresent()){
+				responseObj.put("app",existingAppProcess.get().toJsonObject());
+				sendSuccessResponse(response, appName + " App Already Running", responseObj.toString());
+				return;
+			}
+		}
+		if (appExists && isRestart) {
 			Optional<AppProcess> existingAppProcess = appModelList.stream()
 					.filter(x -> x.getName().equals(appName))
 					.findFirst();
@@ -112,7 +126,8 @@ public class AppsRunnerServiceRoute implements HttpService {
 				restartAppProcess(appProcess);
 				long pid = waitForProcessStart(appProcess);
 				if (pid != 0) {
-					populateResponse(responseObj, appProcess, pid);
+					//populateResponse(responseObj, appProcess, pid);
+					responseObj.put("app", appProcess.toJsonObject());
 				} else {
 					log.warning("Process failed to start after multiple attempts.");
 				}
@@ -122,16 +137,18 @@ public class AppsRunnerServiceRoute implements HttpService {
 			AppProcess appProcess = new AppProcess();
 			updateAppProcess(appProcess, appName, version, description, sdkPath);
 			appProcess.runApp(filePath, "");
-			long pid = waitForProcessStart(appProcess);
+			Long pid = waitForProcessStart(appProcess);
 			if (pid != 0) {
-				populateResponse(responseObj, appProcess, pid);
+				System.out.println("xxx");
+				//populateResponse(responseObj, appProcess, pid);
+				responseObj.put("app", appProcess.toJsonObject());
 				appModelList.add(appProcess);
 			} else {
 				log.warning("Process failed to start after multiple attempts.");
 			}
 		}
 		
-		sendSuccessResponse(response,"Started App", responseObj.toString());
+		sendSuccessResponse(response,"Started App " + appName + " successfully", responseObj.toString());
 	}
 	
 	private void updateAppProcess(AppProcess appProcess, String appName, String version, String description, String sdkPath) {
@@ -147,13 +164,13 @@ public class AppsRunnerServiceRoute implements HttpService {
 	
 	private long waitForProcessStart(AppProcess appProcess) {
 		int attempts = 0;
-		long pid = 0;
+		Long pid = null;
 		int MAX_ATTEMPTS = 5;
 		long DELAY_SECONDS = 1;
 		
-		while (pid == 0 && attempts < MAX_ATTEMPTS) {
+		while (pid == null && attempts < MAX_ATTEMPTS) {
 			pid = appProcess.getPid();
-			if (pid != 0) {
+			if (pid != null) {
 				log.info("Process started with PID: " + pid);
 				break;
 			}
@@ -169,15 +186,6 @@ public class AppsRunnerServiceRoute implements HttpService {
 		return pid;
 	}
 	
-	private void populateResponse(JSONObject responseObj, AppProcess appProcess, long pid) {
-		responseObj.put("pid", pid);
-		responseObj.put("name", appProcess.getName());
-		responseObj.put("id", appProcess.getId());
-		responseObj.put("version", appProcess.getVersion());
-		responseObj.put("uptime", appProcess.getProcessUpTime());
-		responseObj.put("mem", appProcess.getProcessRamUse());
-		responseObj.put("user", "jpm");
-	}
 	
 	/*private void sendSuccessResponse(ServerResponse response, String responseData) {
 		JsonObject returnObject = JSON.createObjectBuilder()
@@ -233,6 +241,7 @@ public class AppsRunnerServiceRoute implements HttpService {
 		JsonObject errorObject = Json.createObjectBuilder()
 				.add("success", false)
 				.add("error", message)
+				.add("message", message)
 				.build();
 		response.send(errorObject);
 	}

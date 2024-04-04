@@ -8,6 +8,8 @@ import io.helidon.config.Config;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
 
+import static africa.jopen.utils.XSystemUtils.getPIDRAMUsage;
+
 
 /**
  * The application main class.
@@ -123,7 +125,7 @@ public class Main {
             });
             System.out.println("done " + i);
         }*/
-        
+       // getPIDRAMUsage("1432");
 
     }
    

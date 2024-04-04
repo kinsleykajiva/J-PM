@@ -2,6 +2,7 @@ package africa.jopen.process;
 
 import africa.jopen.utils.XLogger;
 import africa.jopen.utils.XSystemUtils;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -131,7 +132,35 @@ public class AppProcess {
 		
 	}
 	
-	private void startChildThreads(Process process) {
+	
+	
+	public JSONObject toJsonObject() {
+		JSONObject jsonObject = new JSONObject();
+		
+		jsonObject.put("id", id);
+		jsonObject.put("name", name);
+		jsonObject.put("version", getVersion());
+		jsonObject.put("description", getDescription());
+		jsonObject.put("tags", tags);
+		jsonObject.put("exeCommand", exeCommand);
+		jsonObject.put("status", "online");
+		jsonObject.put("cpu", "0%");
+		jsonObject.put("sdkPath", sdkPath);
+		
+		jsonObject.put("mem", getProcessRamUse());
+		jsonObject.put("user", "jpm");
+		// Skip adding processBuilder as it's not directly convertible to JSON
+		jsonObject.put("pid", getPid());
+		// Convert Instant startTime to string before adding to JSON
+		jsonObject.put("uptime", getProcessUpTime());
+		jsonObject.put("startTime", startTime != null ? startTime.toString() : null);
+		System.out.println(jsonObject.toString());
+		// Skip adding threads as they're not directly convertible to JSON
+		return jsonObject;
+	}
+	
+	
+	private void startChildThreads( Process process) {
 		childOutputLoggerThread = Thread.ofVirtual().start(() -> {
 			try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
 				String line;
@@ -293,7 +322,7 @@ public class AppProcess {
 	}
 	
 	public String getVersion() {
-		return version;
+		return version == null ? "0" : version;
 	}
 	
 	public void setVersion( String version ) {
@@ -301,7 +330,7 @@ public class AppProcess {
 	}
 	
 	public String getDescription() {
-		return description;
+		return description == null ? "--":description;
 	}
 	
 	public void setDescription( String description ) {
@@ -317,7 +346,7 @@ public class AppProcess {
 	}
 	
 	public String getExeCommand() {
-		return exeCommand;
+		return exeCommand == null ? "": exeCommand;
 	}
 	
 	public void setExeCommand( String exeCommand ) {

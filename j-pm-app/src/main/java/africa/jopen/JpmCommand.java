@@ -1,9 +1,6 @@
 package africa.jopen;
 
-import africa.jopen.utils.TablePrinter;
-import africa.jopen.utils.XFilesUtils;
-import africa.jopen.utils.XHttpUtils;
-import africa.jopen.utils.XSystemUtils;
+import africa.jopen.utils.*;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.serde.ObjectMapper;
 import org.json.JSONObject;
@@ -55,6 +52,7 @@ public class JpmCommand implements Runnable {
 				System.out.println("file: " + file);
 				System.out.println("file: " + currentDirectory + File.separator + file);
 				exec[4] = file;
+				exec[2] = "start";
 				exec[6] = currentDirectory + File.separator + file;
 				
 			}
@@ -177,8 +175,50 @@ public class JpmCommand implements Runnable {
 		
 		if (command.equalsIgnoreCase("start")) {
 			if (appFile == null || appFile.isEmpty()) {
-				System.out.println(" --app or -a is required to know what to run");
+				System.err.println(" --app or -a is so will use ");
 			}
+			System.out.println("Starting..." + name);
+			System.out.println(command + " " + appFile);
+			String app12  ="C:\\Users\\Kinsl\\IdeaProjects\\jar-demo\\target\\test-app.js";
+			var response = XHttpUtils.postRequest("run",
+					new JSONObject()
+							.put("appName",name)
+							.put("filePath",app12)
+							.toString());
+			System.out.println(response);
+			if(response == null || response.isEmpty()){
+				System.err.println("failed to get data");
+				return;
+			}
+			JSONObject  jsonObject = new JSONObject(response);
+			if(jsonObject.getBoolean("success")){
+//				System.out.println("App started successfully");
+				XUtils.printSuccessMessage(jsonObject.getString("message"));
+				var data=jsonObject.getJSONObject("data");
+				var app1 = data.getJSONObject("app");
+				String[][] data1 = new String[1][];
+				
+					
+					String[] rowData = {
+							String.valueOf(app1.getInt("id")),
+							app1.getString("name"),
+							app1.getString("version"),
+							String.valueOf(app1.getLong("pid")),
+							app1.getString("uptime"),
+							app1.getString("status"),
+							app1.getString("cpu"),
+							app1.getString("mem"),
+							app1.getString("user")
+					};
+					
+					// Assign the String array to the corresponding index in the data1 array
+					data1[0] = rowData;
+				
+				new TablePrinter(data1);
+			}else{
+				System.out.println("Failed to start app " + jsonObject.getString("message"));
+			}
+			
 		}
 		
 		

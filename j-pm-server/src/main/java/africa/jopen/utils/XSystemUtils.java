@@ -85,6 +85,7 @@ public class XSystemUtils {
 		
 		return output;
 		} catch (IOException | InterruptedException e) {
+			e.printStackTrace();
 			log.severe("Error executing command: " + command + " " + e);
 		}
 		return output;
@@ -101,39 +102,45 @@ public class XSystemUtils {
 		pid = pid.trim();
 		if(pid == null || pid.isEmpty())
 			return "--";
-		List<String>  output = bashExecute(System.getProperty("os.name").toLowerCase().startsWith("win")?
-				"tasklist /FI \"PID eq "+pid+"\" /NH | findstr /i \""+pid+"\"\n" :"ps -p "+pid+" -o rss=  ");
-		if(output.isEmpty()){
-			return "--";
-		}
-		final String[] res = { "--" };
-		if(System.getProperty("os.name").toLowerCase().startsWith("win")){
-			output.forEach(line->{
-				line=line.trim();
-				if(!line.isEmpty()){
-					int ramInKB = parseMemory(line);
-					int ramInMB = convertKBtoMB(ramInKB);
-					System.out.println("Memory Usage: " + ramInMB + " MB");
-					res[0] = ramInMB + " MB";
-				}
-			});
-		}else{
-			//System.out.println(output);
-			output.forEach(line->{
-				line = line.trim();
-				if (!line.isEmpty()) {
-					if(line.chars().allMatch(Character::isDigit)){
-						int ramInKB = Integer.parseInt(line);
+		try{
+			List<String> output = bashExecute(System.getProperty("os.name").toLowerCase().startsWith("win") ?
+					"tasklist /FI \"PID eq " + pid + "\" /NH | findstr /i \"" + pid + "\"\n" : "ps -p " + pid + " -o rss=  ");
+			if(output.isEmpty()){
+				return "--";
+			}
+			final String[] res = { "--" };
+			if(System.getProperty("os.name").toLowerCase().startsWith("win")){
+				output.forEach(line->{
+					line=line.trim();
+					if(!line.isEmpty()){
+						System.out.println("line ---- " + line);
+						int ramInKB = parseMemory(line);
 						int ramInMB = convertKBtoMB(ramInKB);
 						System.out.println("Memory Usage: " + ramInMB + " MB");
 						res[0] = ramInMB + " MB";
 					}
-					
-				}
-			});
+				});
+			}else{
+				//System.out.println(output);
+				output.forEach(line->{
+					line = line.trim();
+					if (!line.isEmpty()) {
+						if(line.chars().allMatch(Character::isDigit)){
+							int ramInKB = Integer.parseInt(line);
+							int ramInMB = convertKBtoMB(ramInKB);
+							System.out.println("Memory Usage: " + ramInMB + " MB");
+							res[0] = ramInMB + " MB";
+						}
+						
+					}
+				});
+			}
+			
+			return res[0];
+		}catch (Exception e){
+			e.printStackTrace();
+			return "--";
 		}
-		
-		return res[0];
 	}
 	
 	public static boolean checkIfProcessExists(long pid) {

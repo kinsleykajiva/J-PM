@@ -62,6 +62,10 @@ public class XUtils {
 		return false;
 	}
 	
+	public static void printSuccessMessage(String message){
+		System.out.println("\u001B[32m\u2713 "+message+"\u001B[0m");
+	}
+	
 	public static boolean deleteService(String serviceName) {
 		String os = System.getProperty("os.name").toLowerCase();
 		if (os.startsWith("win")) {
