@@ -43,7 +43,7 @@ public class JpmCommand implements Runnable {
 			String[] exec = { "-v", "-c", "install", "--name", "", "--app", "" };
 			if (args[0].equals("start")) { // start app.js or start app.jar
 				String file = args[1];
-				// get crrent directory
+				// get current directory
 				System.out.println("file: " + file);
 				System.out.println("file: " + currentDirectory + File.separator + file);
 				exec[4] = file;

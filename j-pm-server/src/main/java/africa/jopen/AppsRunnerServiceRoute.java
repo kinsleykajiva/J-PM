@@ -17,9 +17,9 @@ import java.util.logging.Logger;
 
 import static africa.jopen.utils.XSystemUtils.checkIfProcessExists;
 
-public class AppsRunnerService implements HttpService {
+public class AppsRunnerServiceRoute implements HttpService {
 	private static final JsonBuilderFactory JSON         = Json.createBuilderFactory(Collections.emptyMap());
-	private              List<AppProcess>   appModelList = new ArrayList<>();
+	private final        List<AppProcess>   appModelList = new ArrayList<>();
 	Logger log = Logger.getLogger(AppProcess.class.getName());
 	public void addAppModel( AppProcess appModel ) {
 		appModel.setId(createAppId());
@@ -50,11 +50,11 @@ public class AppsRunnerService implements HttpService {
 		return existingIds.getLast() + 1;
 	}
 	
-	AppsRunnerService() {
+	AppsRunnerServiceRoute() {
 		this(Config.global().get("app"));
 	}
 	
-	AppsRunnerService( Config appConfig ) {
+	AppsRunnerServiceRoute( Config appConfig ) {
 		//greeting.set(appConfig.get("greeting").asString().orElse("Ciao"));
 	}
 	

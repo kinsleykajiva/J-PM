@@ -2,18 +2,11 @@
 package africa.jopen;
 
 
-import africa.jopen.process.AppProcess;
-import africa.jopen.utils.XLogger;
 import africa.jopen.utils.XSystemUtils;
 import io.helidon.logging.common.LogConfig;
 import io.helidon.config.Config;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.http.HttpRouting;
-
-import java.util.concurrent.TimeUnit;
-
-import static africa.jopen.utils.XSystemUtils.checkIfProcessExists;
-import static africa.jopen.utils.XSystemUtils.getPIDRAMUsage;
 
 
 /**
@@ -141,7 +134,8 @@ public class Main {
      */
     static void routing(HttpRouting.Builder routing) {
         routing
+               .register("/app", new AppsRunnerServiceRoute())
                .register("/greet", new GreetService())
-               .get("/simple-greet", (req, res) -> res.send("Hello World!")); 
+               .get("/simple-greet", (req, res) -> res.send("Hello World!"));
     }
 }
