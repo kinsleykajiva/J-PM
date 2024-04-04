@@ -8,6 +8,7 @@ import io.helidon.webserver.http.ServerRequest;
 import io.helidon.webserver.http.ServerResponse;
 import jakarta.json.*;
 import jakarta.json.stream.JsonParser;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -76,7 +77,11 @@ public class AppsRunnerServiceRoute implements HttpService {
 	 */
 	private void index( ServerRequest request, ServerResponse response ) {
 		JSONObject responseObj = new JSONObject();
-		responseObj.put("apps", appModelList);
+		JSONArray apps=new JSONArray();
+		appModelList.forEach(x->{
+			apps.put(x.toJsonObject());
+		});
+		responseObj.put("apps", apps);
 		sendSuccessResponse(response, "running apps",responseObj.toString());
 	}
 	

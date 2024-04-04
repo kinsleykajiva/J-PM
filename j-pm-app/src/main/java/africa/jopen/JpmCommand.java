@@ -246,10 +246,10 @@ public class JpmCommand implements Runnable {
 				for (int i = 0; i < appSize; i++) {
 					JSONObject app = apps.getJSONObject(i);
 					String[] rowData = {
-							app.getString("id"),
+							String.valueOf(app.getInt("id")),
 							app.getString("name"),
 							app.getString("version"),
-							app.getString("pid"),
+							String.valueOf(app.getLong("pid")),
 							app.getString("uptime"),
 							app.getString("status"),
 							app.getString("cpu"),
