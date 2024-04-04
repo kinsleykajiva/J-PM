@@ -92,7 +92,19 @@ public class AppsRunnerServiceRoute implements HttpService {
 		JSONObject responseObj = new JSONObject();
 		JSONObject body = new JSONObject(bodyText);
 		
-		int id = body.optInt("appName", 0);// this is an update to restart
+		int id;
+		if (body.has("id") && !body.isNull("id")) {
+			Object idObj = body.get("id");
+			if (idObj instanceof Number) {
+				id = ((Number) idObj).intValue();
+			} else {
+				id = -1;
+			}
+		} else {
+			id = -1;
+		}
+		
+		//int id = body.optInt("id", -1);// this is an update to restart
 		boolean isRestart = body.optBoolean("isRestart", false);
 		String appName = body.optString("appName", null);
 		Long pidValue = body.optLong("pid", 0);
@@ -100,16 +112,37 @@ public class AppsRunnerServiceRoute implements HttpService {
 		String sdkPath = body.optString("sdkPath", null);
 		String description = body.optString("description", null);
 		String version = body.optString("version", null);
-		// test if file exists at all
-		var file = new File(filePath);
-		if(!file.exists()){
-			sendErrorResponse(response, "File not found");
+	
+		
+		if((appName != null && appName.isEmpty())
+		&& (id == -1)  && isRestart
+		){
+			// means restart all apps
+			appModelList.forEach(appProcess->{
+				
+					updateAppProcess(appProcess, appName, version, description, sdkPath);
+					restartAppProcess(appProcess);
+					long pid = waitForProcessStart(appProcess);
+					if (pid != 0) {
+						appProcess.toJsonObject();
+					} else {
+						log.warning("Process failed to start after multiple attempts.");
+					}
+				
+			});
+			index(request,response);
 			return;
 		}
+		
 		
 		boolean appExists = appModelList.stream().anyMatch(appModel ->
 				appModel.getName().equals(appName) || appModel.getId()== id
 		);
+		/*var file = new File(filePath);
+		if(!file.exists()){
+			sendErrorResponse(response, "File not found");
+			return;
+		}*/
 		
 		if (appExists && !isRestart) {
 			Optional<AppProcess> existingAppProcess = appModelList.stream()
@@ -157,10 +190,19 @@ public class AppsRunnerServiceRoute implements HttpService {
 	}
 	
 	private void updateAppProcess(AppProcess appProcess, String appName, String version, String description, String sdkPath) {
-		appProcess.setName(appName);
-		appProcess.setVersion(version);
-		appProcess.setDescription(description);
-		appProcess.setSdkPath(sdkPath);
+		if( appName != null  && !appName.isEmpty()) {
+			appProcess.setName(appName);
+		}
+		
+		if( version != null  && !version.isEmpty()) {
+			appProcess.setVersion(version);
+		}
+		if( description != null  && !description.isEmpty()) {
+			appProcess.setDescription(description);
+		}
+		if( sdkPath != null  && !sdkPath.isEmpty()) {
+			appProcess.setSdkPath(sdkPath);
+		}
 	}
 	
 	private void restartAppProcess(AppProcess appProcess) {

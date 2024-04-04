@@ -2,7 +2,7 @@ package africa.jopen;
 
 import africa.jopen.utils.*;
 import io.micronaut.configuration.picocli.PicocliRunner;
-import io.micronaut.serde.ObjectMapper;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -45,6 +45,12 @@ public class JpmCommand implements Runnable {
 			if (args[0].equals("ls")) { // ls
 				exec[2] = "ls";
 				exec[6] = "";
+			}
+			if (args[0].equals("restart")) { // ls
+				exec[2] = "ls";
+				exec[6] = "";
+				String appNameId = args.length == 1 ? "all" : args[1];
+				exec[4] = appNameId;
 			}
 			if (args[0].equals("start")) { // start app.js or start app.jar
 				String file = args[1];
@@ -163,87 +169,162 @@ public class JpmCommand implements Runnable {
 	}
 	
 	public void run() {
-		// business logic here
 		if (verbose) {
-		
-		}
-		if (name != null && !name.isEmpty()) {
-			System.out.println("Hi, " + name + "!");
-		} else {
-			System.out.println("Hi!");
+			// Add verbose logic here
 		}
 		
-		if (command.equalsIgnoreCase("start")) {
-			if (appFile == null || appFile.isEmpty()) {
-				System.err.println(" --app or -a is so will use ");
-			}
-			System.out.println("Starting..." + name);
-			System.out.println(command + " " + appFile);
-			String app12  ="C:\\Users\\Kinsl\\IdeaProjects\\jar-demo\\target\\test-app.js";
-			var response = XHttpUtils.postRequest("run",
+		switch (command.toLowerCase()) {
+			case "restart":
+				reStartApp();
+				break;
+			case "start":
+				startApp();
+				break;
+			case "stop":
+				stopApp();
+				break;
+			case "ls":
+				listApps();
+				break;
+			case "install":
+				installApp();
+				break;
+			default:
+				System.out.println("Unsupported command: " + command);
+		}
+	}
+	
+	private void reStartApp() {
+		System.out.println("reStarting..." + name);
+		String response = null;
+		if (name.equals("all")) {
+			response = XHttpUtils.postRequest("run",
 					new JSONObject()
-							.put("appName",name)
-							.put("filePath",app12)
+							.put("appName", "")
+							.put("id", -1)
+							.put("isRestart", true)
 							.toString());
-			System.out.println(response);
-			if(response == null || response.isEmpty()){
-				System.err.println("failed to get data");
+			JSONObject jsonObject = new JSONObject(response);
+			if (jsonObject.getBoolean("success")) {
+				JSONArray apps = jsonObject.getJSONObject("data").getJSONArray("apps");
+				if (apps.length() > 0) {
+					String[][] data1 = new String[apps.length()][];
+					for (int i = 0; i < apps.length(); i++) {
+						JSONObject app = apps.getJSONObject(i);
+						String[] rowData = {
+								String.valueOf(app.getInt("id")),
+								app.getString("name"),
+								app.getString("version"),
+								String.valueOf(app.getLong("pid")),
+								app.getString("uptime"),
+								app.getString("status"),
+								app.getString("cpu"),
+								app.getString("mem"),
+								app.getString("user")
+						};
+						data1[i] = rowData;
+					}
+					new TablePrinter(data1);
+				} else {
+					System.out.println("\u001B[31m\u2713 No apps found/Running\u001B[0m");
+				}
+			} else {
+				printErrorMessage("Failed to get apps: " + jsonObject.getString("message"));
+			}
+		} else {
+			response = XHttpUtils.postRequest("run",
+					new JSONObject()
+							.put("appName", name)
+							.put("id", name)
+							.put("isRestart", true)
+							.toString());
+			
+			
+			if (response == null || response.isEmpty()) {
+				System.err.println("Failed to get data");
 				return;
 			}
-			JSONObject  jsonObject = new JSONObject(response);
-			if(jsonObject.getBoolean("success")){
-//				System.out.println("App started successfully");
+			
+			JSONObject jsonObject = new JSONObject(response);
+			if (jsonObject.getBoolean("success")) {
 				XUtils.printSuccessMessage(jsonObject.getString("message"));
-				var data=jsonObject.getJSONObject("data");
-				var app1 = data.getJSONObject("app");
-				String[][] data1 = new String[1][];
-				
-					
-					String[] rowData = {
-							String.valueOf(app1.getInt("id")),
-							app1.getString("name"),
-							app1.getString("version"),
-							String.valueOf(app1.getLong("pid")),
-							app1.getString("uptime"),
-							app1.getString("status"),
-							app1.getString("cpu"),
-							app1.getString("mem"),
-							app1.getString("user")
-					};
-					
-					// Assign the String array to the corresponding index in the data1 array
-					data1[0] = rowData;
-				
-				new TablePrinter(data1);
-			}else{
-				System.out.println("Failed to start app " + jsonObject.getString("message"));
+				JSONObject data = jsonObject.getJSONObject("data");
+				JSONObject app1 = data.getJSONObject("app");
+				printAppDetails(app1);
+			} else {
+				System.out.println("Failed to start app: " + jsonObject.getString("message"));
 			}
-			
+		}
+	}
+	
+	private void startApp() {
+		if (name == null || name.isEmpty()) {
+			System.out.println("Hi!");
+		} else {
+			System.out.println("Hi, " + name + "!");
 		}
 		
-		
-		if (command.equalsIgnoreCase("stop")) {
-			System.out.println("Stopping...");
+		if (appFile == null || appFile.isEmpty()) {
+			System.err.println("Missing app file!");
+			return;
 		}
-		if (command.equalsIgnoreCase("ls")) {
-			System.out.println("listing...");
-			String response = XHttpUtils.getRequest("");
-			// parse response usin jackson library
-			if(response == null || response.isEmpty()){
-				System.err.println("::::::::::::Failed to get apps.Please check Health Setup::::::::::::");
-				System.err.println("::::::::::::Run \"jpm health\"::::::::::::");
-				return;
-			}
-			System.out.println(response);
-			JSONObject  jsonObject = new JSONObject(response);
-			
-			if(jsonObject.getBoolean("success")){
-			var data = jsonObject.getJSONObject("data");
-			var apps=data.getJSONArray("apps");
-			
-			var appSize = apps.length();
-				String[][] data1 = new String[appSize][];
-				for (int i = 0; i < appSize; i++) {
+		
+		System.out.println("Starting..." + name);
+		String appFilePath = "C:\\Users\\Kinsl\\IdeaProjects\\jar-demo\\target\\test-app.js";
+		var response = XHttpUtils.postRequest("run",
+				new JSONObject()
+						.put("appName", name)
+						.put("filePath", appFilePath)
+						.toString());
+		
+		if (response == null || response.isEmpty()) {
+			System.err.println("Failed to get data");
+			return;
+		}
+		
+		JSONObject jsonObject = new JSONObject(response);
+		if (jsonObject.getBoolean("success")) {
+			XUtils.printSuccessMessage(jsonObject.getString("message"));
+			JSONObject data = jsonObject.getJSONObject("data");
+			JSONObject app1 = data.getJSONObject("app");
+			printAppDetails(app1);
+		} else {
+			System.out.println("Failed to start app: " + jsonObject.getString("message"));
+		}
+	}
+	
+	private void printAppDetails( JSONObject app ) {
+		String[][] data1 = new String[1][];
+		String[] rowData = {
+				String.valueOf(app.getInt("id")),
+				app.getString("name"),
+				app.getString("version"),
+				String.valueOf(app.getLong("pid")),
+				app.getString("uptime"),
+				app.getString("status"),
+				app.getString("cpu"),
+				app.getString("mem"),
+				app.getString("user")
+		};
+		data1[0] = rowData;
+		new TablePrinter(data1);
+	}
+	
+	private void listApps() {
+		System.out.println("Listing apps...");
+		String response = XHttpUtils.getRequest("");
+		
+		if (response == null || response.isEmpty()) {
+			printErrorMessage("Failed to get apps. Please check Health Setup.");
+			return;
+		}
+		
+		JSONObject jsonObject = new JSONObject(response);
+		if (jsonObject.getBoolean("success")) {
+			JSONArray apps = jsonObject.getJSONObject("data").getJSONArray("apps");
+			if (apps.length() > 0) {
+				String[][] data1 = new String[apps.length()][];
+				for (int i = 0; i < apps.length(); i++) {
 					JSONObject app = apps.getJSONObject(i);
 					String[] rowData = {
 							String.valueOf(app.getInt("id")),
@@ -256,53 +337,39 @@ public class JpmCommand implements Runnable {
 							app.getString("mem"),
 							app.getString("user")
 					};
-					
-					// Assign the String array to the corresponding index in the data1 array
 					data1[i] = rowData;
 				}
 				new TablePrinter(data1);
-				if(appSize <1){
-					
-					System.out.println("\u001B[31m\u2713 No apps found/Running\u001B[0m");
-					System.out.println("\u001B[32m\u2713 No apps found/Running\u001B[0m");
-					System.out.println("\u001B[32m\u2753 No apps found/Running\u001B[0m");
-					
-				}
-			}else{
-//				System.out.println("Failed to get apps " + jsonObject.getString("message"));
-				System.out.println("\u001B[32m\u2753 "+"Failed to get apps " + jsonObject.getString("message")+"\u001B[0m");
-				
+			} else {
+				System.out.println("\u001B[31m\u2713 No apps found/Running\u001B[0m");
 			}
-			
+		} else {
+			printErrorMessage("Failed to get apps: " + jsonObject.getString("message"));
 		}
-		
-		
-		if (command.equalsIgnoreCase("install")) {
-			System.out.println("Setting up app");
-			XFilesUtils.getAppFolderPath();
-			XFilesUtils.getCacheFile();
-            /*try{
-                XHttpUtils.downloadFile("https://cdn.pixabay.com/photo/2023/08/19/13/42/water-8200502_1280.jpg",XFilesUtils.getAppFolderPath());
-            }catch (Exception e){
-                e.printStackTrace();
-            }*/
-		}
-		
-		
-	//	printAlignedErrorMessage("❌ Failed to get apps.\nPlease check Health Setup.");
-		
-		// animateDownload();
-       
-        
-        
-        /*else {
-            System.out.println("Hi, " + nameOrCommand + "!");
-        }*/
 	}
-	public static void printAlignedErrorMessage(String message) {
+	
+	private void stopApp() {
+		System.out.println("Stopping...");
+		// Add logic to stop the app
+	}
+	
+	private void installApp() {
+		System.out.println("Setting up app");
+		XFilesUtils.getAppFolderPath();
+		XFilesUtils.getCacheFile();
+		// Add logic to download and install the app
+	}
+	
+	private void printErrorMessage( String message ) {
+		System.err.println("\u001B[31m╔════════════════════════════╗");
+		System.err.println("║  ❌ " + message);
+		System.err.println("╚════════════════════════════╝\u001B[0m");
+	}
+	
+	public static void printAlignedErrorMessage( String message ) {
 		// Determine the length of the longest line in the message
-		int maxLength = 0;
-		String[] lines = message.split("\\n");
+		int      maxLength = 0;
+		String[] lines     = message.split("\\n");
 		for (String line : lines) {
 			maxLength = Math.max(maxLength, line.length());
 		}
@@ -310,15 +377,13 @@ public class JpmCommand implements Runnable {
 		// Print the error message with proper alignment
 		System.err.println("\u001B[31m╔" + "═".repeat(maxLength + 2) + "╗");
 		for (String line : lines) {
-			int paddingLength = maxLength - line.length();
-			String leftPadding = " ".repeat(paddingLength / 2);
-			String rightPadding = " ".repeat(paddingLength - paddingLength / 2);
+			int    paddingLength = maxLength - line.length();
+			String leftPadding   = " ".repeat(paddingLength / 2);
+			String rightPadding  = " ".repeat(paddingLength - paddingLength / 2);
 			System.err.println("║ " + leftPadding + line + rightPadding + " ║");
 		}
 		System.err.println("╚" + "═".repeat(maxLength + 2) + "╝\u001B[0m");
 	}
-	
-	
 	
 	
 }

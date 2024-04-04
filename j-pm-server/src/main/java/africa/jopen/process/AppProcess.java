@@ -261,7 +261,7 @@ public class AppProcess {
 		}
 		
 		if (minutes > 0) {
-			uptimeString.append(", ").append(minutes).append(" minute").append(minutes > 1 ? "s" : "");
+			uptimeString.append(" ").append(minutes).append(" minute").append(minutes > 1 ? "s" : "");
 		}
 		
 		if (seconds > 0 || uptimeString.isEmpty()) {
