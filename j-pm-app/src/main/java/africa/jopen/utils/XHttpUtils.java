@@ -67,8 +67,8 @@ public class XHttpUtils {
 					.build()) {
 				response = client.send(request, HttpResponse.BodyHandlers.ofString());
 			}
-			System.out.println(response.statusCode());
-			System.out.println(response.body());
+			//System.out.println(response.statusCode());
+			//System.out.println(response.body());
 			return response.body();
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();

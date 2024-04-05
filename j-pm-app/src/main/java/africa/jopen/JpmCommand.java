@@ -47,7 +47,13 @@ public class JpmCommand implements Runnable {
 				exec[6] = "";
 			}
 			if (args[0].equals("restart")) { // ls
-				exec[2] = "ls";
+				exec[2] = "restart";
+				exec[6] = "";
+				String appNameId = args.length == 1 ? "all" : args[1];
+				exec[4] = appNameId;
+			}
+			if (args[0].equals("stop")) { // ls
+				exec[2] = "stop";
 				exec[6] = "";
 				String appNameId = args.length == 1 ? "all" : args[1];
 				exec[4] = appNameId;
@@ -63,7 +69,7 @@ public class JpmCommand implements Runnable {
 				
 			}
 			
-			System.out.println("::1:::" + currentDirectory);
+			System.out.println("::1:::" + exec);
 			
 			
 			// Parse command line arguments and run the command
@@ -349,8 +355,49 @@ public class JpmCommand implements Runnable {
 	}
 	
 	private void stopApp() {
-		System.out.println("Stopping...");
+		System.out.println("Stopping...App");
 		// Add logic to stop the app
+		var response = XHttpUtils.postRequest("stop-delete",
+				new JSONObject()
+						.put("appName", name)
+						.put("id", name)
+						.toString());
+		if (response == null || response.isEmpty()) {
+			XUtils.printErrorMessage("Failed to get data");
+			return;
+		}
+		JSONObject jsonObject = new JSONObject(response);
+		if (jsonObject.getBoolean("success")) {
+			XUtils.printSuccessMessage(jsonObject.getString("message"));
+			/*JSONObject data = jsonObject.getJSONObject("data");
+			JSONObject app1 = data.getJSONObject("app");
+			printAppDetails(app1);*/
+			JSONArray apps = jsonObject.getJSONObject("data").getJSONArray("apps");
+			if (apps.length() > 0) {
+				String[][] data1 = new String[apps.length()][];
+				for (int i = 0; i < apps.length(); i++) {
+					JSONObject app = apps.getJSONObject(i);
+					String[] rowData = {
+							String.valueOf(app.getInt("id")),
+							app.getString("name"),
+							app.getString("version"),
+							String.valueOf(app.getLong("pid")),
+							app.getString("uptime"),
+							app.getString("status"),
+							app.getString("cpu"),
+							app.getString("mem"),
+							app.getString("user")
+					};
+					data1[i] = rowData;
+				}
+				new TablePrinter(data1);
+			} else {
+				System.out.println("\u001B[31m\u2713 No apps found/Running\u001B[0m");
+			}
+		} else {
+			//System.out.println("Failed to start app: " + jsonObject.getString("message"));
+			XUtils.printErrorMessage(jsonObject.getString("message"));
+		}
 	}
 	
 	private void installApp() {
