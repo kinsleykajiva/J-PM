@@ -300,15 +300,6 @@ public class AppsRunnerServiceRoute implements HttpService {
 			}
 			
 			appProcess.ifPresent(AppProcess::stop);
-			
-			var exists  = checkIfProcessExists(appProcess.get().getPid());
-			System.out.println("xxxx-111exist  " + exists);
-			responseObj.put(
-					"app",
-					appProcess.get().toJsonObject()
-							.put("IsRunning",exists)
-			);
-			
 			appModelList.remove(appProcess.get());
 			index(request,response);
 			
