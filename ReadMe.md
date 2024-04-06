@@ -14,8 +14,10 @@ Supported applications Environments:
 More support is comming for other apps .
 
 
-#### Whats Required?
+#### What's Required?
 Just make sure Java and NodeJs is install globally on the system .
+
+For development use graalvm-java sdk-22 and above
 
 #### How to install?
 just download the jpm app or binary app found in the [executable-app](/executable-app) folder in this repository.
