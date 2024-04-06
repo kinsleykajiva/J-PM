@@ -280,7 +280,8 @@ public class JpmCommand implements Runnable {
 		var response = XHttpUtils.postRequest("run",
 				new JSONObject()
 						.put("appName", name)
-						.put("filePath", appFilePath)
+						/*.put("filePath", appFilePath)*/
+						.put("filePath", appFile)
 						.toString());
 		
 		if (response == null || response.isEmpty()) {
