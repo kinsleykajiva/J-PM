@@ -1,23 +1,29 @@
 # Java Process Manager (JPM)
 
-Version: 0.1
 
-Welcome and thank you for using
+**Version:** 0.1
 
-JPM is a application process manager for  apps for Linux and Windows Operating Systems.This helps or facilitates your applications to run in the background and report and errors and crushes.
-This is helps with just application administration , we aim to keep the administration very simple
+Welcome and thank you for using JPM!
 
-Supported applications Environments:
+JPM is an application process manager for Linux and Windows Operating Systems, designed to help your applications run in the background, report errors, and handle crashes. Our goal is to simplify application administration as much as possible.
+
+## Supported Application Environments
 - Java Jar apps
 - Node JS apps
 
-More support is comming for other apps .
+More support for other apps is coming soon!
 
+## Features
 
-#### What's Required?
-Just make sure Java and NodeJs is install globally on the system .
+- **Multi-platform Support**: JPM seamlessly works across Linux and Windows environments, offering a consistent experience regardless of your operating system.
+- **Background Process Management**: Effortlessly run your applications in the background, freeing up your terminal or command prompt for other tasks.
+- **Error Reporting**: Stay informed about application errors and crashes with detailed reports, enabling you to troubleshoot issues effectively.
+- **Simple Administration**: JPM prioritizes ease of use, providing a straightforward interface for managing your applications.
 
-For development use graalvm-java sdk-22 and above
+### What's Required?
+Ensure that Java and Node.js are installed globally on your system.
+
+For development, use GraalVM-Java SDK version 22 and above.
 
 #### How to install?
 just download the jpm app or binary app found in the [executable-app](/executable-app) folder in this repository.
@@ -39,31 +45,31 @@ jpm start app.jar
 <img src="imgs/1.png">
 
 
-you can call `jpm` from anywhere on the machine or folder it will work given its defined on the PATH 
+You can call jpm from anywhere on your machine or within a folder, provided it is defined in the PATH
 
 To get list of running apps/process that jpm is managing :
 
 ```shell
 jpm ls
 ```
-To stop application :
-```shell
-jpm stop <app_name|id|'all'>
-```
+
 [Screenshot](imgs/2.png)
 
 <img src="imgs/2.png">
 
-
+To stop application :
+```shell
+jpm stop <app_name|id|'all'>
+```
 
 This will remove the app from the list of apps.
 
 How the app works as much.
 
-The jpm app does not run the application directly it makes use of a baeck service application that maintains them .
-When or after running `jmp install` successfully this will install the server that runs on port 8080 .
+JPM does not directly run the application; instead, it utilizes a backend service application to maintain them. Running `jpm install` installs this server, which operates on port 8080.
 
-Both apps are binary apps . The server will alwasys be running 
+Both apps are binary executables, and the server will always be running after installation.
+
 
 
 
@@ -76,7 +82,9 @@ Graal compiler: optimization level: 2, target machine: x86-64-v3
 C compiler: cl.exe (microsoft, x64, 19.39.33523)
 Garbage collector: Serial GC
 ```
-This app is still in development as this is still being explore if its a viable product to push.
+Please note that this app is still in development, and we are exploring its viability as a production-ready product.
 
-Contributions are welcome.
+
+## Contributions
+JPM is an ongoing project, and contributions from the community are welcome. If you have ideas for improvements or new features, please feel free to submit a pull request or open an issue on the project's GitHub repository
 
