@@ -16,12 +16,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
-@Command(name = "jpm", description = "...",
+@Command(name = "jpm", description = "Java Process Manager",
 		mixinStandardHelpOptions = true)
 public class JpmCommand implements Runnable {
 	
-	@Option(names = { "-v", "--verbose" }, description = "...")
-	boolean verbose;
+	@Option(names = {"-v", "--version"}, description = "Print the version information")
+	boolean printVersion;
+	
 	
 	//	@CommandLine.Parameters(description = "Your name or command")
 	@Option(names = { "-c", "--command" }, description = "Direct command to do")
@@ -34,100 +35,56 @@ public class JpmCommand implements Runnable {
 	String appFile;
 	
 	
-	public static void main( String[] args ) {
+	public static void main(String[] args) {
 		XSystemUtils.checkForSDKs();
 		Path currentDirectory = Paths.get(System.getProperty("user.dir"));
 		Arrays.asList(args).forEach(System.out::println);
-		
-		
 		if (args.length > 0) {
-			String[] exec = { "-v", "-c", "install", "--name", "", "--app", "" };
-			if (args[0].equals("ls")) { // ls
-				exec[2] = "ls";
-				exec[6] = "";
-			}
-			if (args[0].equals("restart")) { // ls
-				exec[2] = "restart";
-				exec[6] = "";
-				String appNameId = args.length == 1 ? "all" : args[1];
-				exec[4] = appNameId;
-			}
-			if (args[0].equals("stop")) { // ls
-				exec[2] = "stop";
-				exec[6] = "";
-				String appNameId = args.length == 1 ? "all" : args[1];
-				exec[4] = appNameId;
-			}
-			if (args[0].equals("start")) { // start app.js or start app.jar
-				String file = args[1];
-				// get current directory
-				System.out.println("file: " + file);
-				System.out.println("file: " + currentDirectory + File.separator + file);
-				exec[4] = file;
-				exec[2] = "start";
-				exec[6] = currentDirectory + File.separator + file;
-				
-			}
-			
-			System.out.println("::1:::" + exec);
-			
-			
-			// Parse command line arguments and run the command
-//        int exitCode = new CommandLine(new JpmCommand()).execute("-v", "nameOrCommandValue", "--name", "John", "--app", "exampleAppFile.txt");
-			// int exitCode = new CommandLine(new JpmCommand()).execute("-v", "install", "--name", "John", "--app", "exampleAppFile.txt");
+			String[] exec = handleCommandLineArguments(args, currentDirectory);
 			int exitCode = new CommandLine(new JpmCommand()).execute(exec);
-			
-			// Exit with the exit code
 			System.exit(exitCode);
 		} else {
+			
 			PicocliRunner.run(JpmCommand.class, args);
-		}
-		
-	}
-	
-	public static void main1( String[] args ) throws Exception {
-		//System.out.println(args);
-		JpmCommand command = new JpmCommand();
-		Arrays.asList(args).forEach(System.out::println);
-		PicocliRunner.run(JpmCommand.class, args);
-		CommandLine.run(command, args);
-		
-	}
-	
-	private void animateDownload() {
-		boolean success       = true; // Simulating successful completion, modify this according to your actual logic
-		int     terminalWidth = getTerminalWidth();
-		Thread thread = new Thread(() -> {
-			try {
-				int percent = 0;
-				while (percent <= 100) {
-					System.out.print("\rDownloading: [" + getProgressString(percent, terminalWidth) + "] " + percent + "%");
-					Thread.sleep(200); // Adjust the speed of animation here
-					percent += 5; // Adjust the step size here
-				}
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
-		});
-		thread.start();
-		
-		// Simulate some work
-		try {
-			Thread.sleep(2000); // Simulate download time
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			success = false; // Error occurred
-		}
-		
-		thread.interrupt(); // Stop the animation thread
-		System.out.print("\r"); // Move cursor to the beginning of the line
-		if (success) {
-			System.out.println("Downloading: [" + getProgressString(100, terminalWidth) + "] 100% \u2713"); // Green tick for success
-		} else {
-			System.out.println("Downloading: [" + getProgressString(100, terminalWidth) + "] 100% \u274C"); // Red cross for error
+			
 		}
 	}
 	
+	private static String[] handleCommandLineArguments(String[] args, Path currentDirectory) {
+		String[] exec = {"-v", "-c", "install", "--name", "", "--app", ""};
+		
+		/*if (args[0].equals("-v") || args[0].equals("--version")) {
+			printVersion();
+			System.exit(0);
+		} else */if (args[0].equals("ls")) {
+			exec[2] = "ls";
+			exec[6] = "";
+		} else if (args[0].equals("restart")) {
+			exec[2] = "restart";
+			exec[6] = "";
+			String appNameId = args.length == 1 ? "all" : args[1];
+			exec[4] = appNameId;
+		} else if (args[0].equals("stop")) {
+			exec[2] = "stop";
+			exec[6] = "";
+			String appNameId = args.length == 1 ? "all" : args[1];
+			exec[4] = appNameId;
+		} else if (args[0].equals("start")) {
+			String file = args[1];
+			System.out.println("file: " + file);
+			System.out.println("file: " + currentDirectory + File.separator + file);
+			exec[4] = file;
+			exec[2] = "start";
+			exec[6] = currentDirectory + File.separator + file;
+		}
+		
+		return exec;
+	}
+	
+	private static void printVersion() {
+		// Print the version information here
+		System.out.println("Java Process Manager (jpm) version 1.0.0");
+	}
 	private String getProgressString( int percent, int terminalWidth ) {
 		int           numOfChars     = (int) ((percent / 100.0) * (terminalWidth - 13)); // 13 is the length of "Downloading: [] %"
 		StringBuilder progressString = new StringBuilder();
@@ -175,8 +132,18 @@ public class JpmCommand implements Runnable {
 	}
 	
 	public void run() {
-		if (verbose) {
-			// Add verbose logic here
+		if (printVersion) {
+			System.out.println("Java Process Manager (jpm) version 0.1.0");
+			return;
+		}
+		if (command == null) {
+			System.out.println("Please provide a command or use flags to perform actions.");
+			CommandLine.usage(this, System.out);
+			System.out.println("  start <app_file>          Start the specified application");
+			System.out.println("  stop <app_name>           Stop the specified application");
+			System.out.println("  ls                        List all applications");
+			System.out.println("  install                   Check install is properly done");
+			return;
 		}
 		
 		switch (command.toLowerCase()) {
@@ -197,6 +164,7 @@ public class JpmCommand implements Runnable {
 				break;
 			default:
 				System.out.println("Unsupported command: " + command);
+				CommandLine.usage(this, System.out);
 		}
 	}
 	

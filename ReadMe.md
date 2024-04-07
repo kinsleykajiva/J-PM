@@ -93,6 +93,12 @@ Garbage collector: Serial GC
 ```
 Please note that this app is still in development, and we are exploring its viability as a production-ready product.
 
+## Folders/Files of interest 
+- `${HOME}/.jpm` - this is the folder where everything that this app will use to cache
+- `${HOME}/.jpm/logs` - where are all running apps logs are located
+
+
+
 
 ## Contributions
 JPM is an ongoing project, and contributions from the community are welcome. If you have ideas for improvements or new features, please feel free to submit a pull request or open an issue on the project's GitHub repository
