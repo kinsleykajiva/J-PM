@@ -1,5 +1,7 @@
 package africa.jopen.utils;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.logging.Logger;
 
 import java.util.List;
@@ -36,6 +38,12 @@ public class XUtils {
 			return checkServiceExists(serviceName);
 		}
 		return false;
+	}
+	
+	public static String getCurrentDateTime() {
+		LocalDateTime     now       = LocalDateTime.now();
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		return now.format(formatter);
 	}
 	
 	public static boolean ifServiceIsRunning(String serviceName) {

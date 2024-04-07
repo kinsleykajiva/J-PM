@@ -409,9 +409,9 @@ public class JpmCommand implements Runnable {
 	}
 	
 	private void printErrorMessage( String message ) {
-		System.err.println("\u001B[31m╔════════════════════════════╗");
-		System.err.println("║  ❌ " + message);
-		System.err.println("╚════════════════════════════╝\u001B[0m");
+		
+		System.err.println("\u001B[31m  ❌ " + message);
+		
 	}
 	
 	public static void printAlignedErrorMessage( String message ) {

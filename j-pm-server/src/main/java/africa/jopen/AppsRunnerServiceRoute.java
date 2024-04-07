@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import static africa.jopen.utils.XSystemUtils.checkIfProcessExists;
 
 public class AppsRunnerServiceRoute implements HttpService {
 	private static final JsonBuilderFactory JSON         = Json.createBuilderFactory(Collections.emptyMap());
