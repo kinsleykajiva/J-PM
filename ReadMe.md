@@ -28,6 +28,15 @@ For development, use GraalVM-Java SDK version 22 and above.
 #### How to install?
 just download the jpm app or binary app found in the [executable-app](/executable-app) folder in this repository.
 
+or just run this 
+
+For windows install command :
+```shell
+powershell -c "irm https://raw.githubusercontent.com/kinsleykajiva/J-PM/master/executable-app/windows/install.ps1 | iex"
+
+```
+this command will download and install jpm and will also add jpm to system PATH .So restart your shell and run `jpm -v`
+
 Make jpm as part of the global `PATH` or add the folder where jpm file is found to `PATH`
 
 Please note the first install of running `jpm install` run as adminstrator . 
