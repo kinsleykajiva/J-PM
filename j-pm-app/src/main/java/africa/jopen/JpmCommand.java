@@ -246,15 +246,25 @@ public class JpmCommand implements Runnable {
 				System.out.println("No logs found.");
 				return;
 			}
-			Consumer<String> logConsumer = line -> System.out.println(line);
+			
+			/*List<Future<?>> futures = IntStream.range(0, APP_CACHE_JSONArray.length())
+					.mapToObj(APP_CACHE_JSONArray::getJSONObject)
+					.filter(app -> app.has("log"))
+					.map(app -> app.getString("log"))
+					.map(File::new)
+					.filter(File::exists)
+					.map(logFile -> executorService.submit(new LogFileStreamer(logFile.getPath(), false)))
+					.collect(Collectors.toList());*/
+			
 			List<Future<?>> futures = IntStream.range(0, APP_CACHE_JSONArray.length())
 					.mapToObj(APP_CACHE_JSONArray::getJSONObject)
 					.filter(app -> app.has("log"))
 					.map(app -> app.getString("log"))
 					.map(File::new)
 					.filter(File::exists)
-					.map(logFile -> executorService.submit(new LogFileStreamer(logFile.getPath(), false,logConsumer)))
+					.map(logFile -> executorService.submit(new LogFileStreamer(logFile.getPath(), false)))
 					.collect(Collectors.toList());
+			
 			
 			futures.forEach(future -> {
 				try {
@@ -286,7 +296,9 @@ public class JpmCommand implements Runnable {
 			String           fileLog     = app.getString("log");
 			File logFile = new File(fileLog);
 			if (logFile.exists()) {
-				new LogFileStreamer(fileLog, true,logConsumer).run();
+				//new LogFileStreamer(fileLog, true,System.out::println).run();
+				LogFileStreamer logFileStreamer = new LogFileStreamer(fileLog, true);
+				logFileStreamer.run();
 			} else {
 				System.out.println("No logs found.");
 			}

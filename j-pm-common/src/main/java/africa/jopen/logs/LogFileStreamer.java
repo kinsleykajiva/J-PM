@@ -16,7 +16,7 @@ import static africa.jopen.utils.XUtils.printErrorMessage;
 public class LogFileStreamer implements Runnable {
 	private final Path logFilePath;
 	private final boolean tailFile;
-	private final Consumer<String> logConsumer;
+	
 	private volatile boolean          canRun   = true;
 	
 	/**
@@ -25,13 +25,11 @@ public class LogFileStreamer implements Runnable {
 	 * @param logFilePath The path of the log file to stream.
 	 * @param tailFile    A boolean indicating whether to tail the log file (true)
 	 *                    or read the entire file (false).
-	 * @param logConsumer A Consumer<String> instance that will be called with each
-	 *                    line read from the log file.
 	 */
-	public LogFileStreamer(String logFilePath, boolean tailFile, Consumer<String> logConsumer) {
+	public LogFileStreamer(String logFilePath, boolean tailFile) {
 		this.logFilePath = Paths.get(logFilePath);
 		this.tailFile = tailFile;
-		this.logConsumer = logConsumer;
+		
 		
 		if (Files.notExists(this.logFilePath)) {
 			canRun = false;
@@ -92,7 +90,7 @@ public class LogFileStreamer implements Runnable {
 	 */
 	private void readEntireFile() throws IOException {
 		Files.lines(logFilePath)
-				.forEach(logConsumer);
+				.forEach(System.out::println);
 	}
 	/**
 	 * Processes the log file by reading new lines since the last known position
@@ -103,7 +101,7 @@ public class LogFileStreamer implements Runnable {
 	private void processLogFile() throws IOException {
 		Files.lines(logFilePath)
 				.skip(lastKnownPosition)
-				.forEach(logConsumer);
+				.forEach(System.out::println);
 		lastKnownPosition = Files.lines(logFilePath).count();
 	}
 	
