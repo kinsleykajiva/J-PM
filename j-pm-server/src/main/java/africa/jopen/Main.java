@@ -45,7 +45,7 @@ public class Main {
                 .start();
 
 
-        System.out.println("WEB server is up! http://localhost:" + server.port() + "/simple-greet");
+        System.out.println("2xxxWEB server is up! http://localhost:" + server.port() + "/simple-greet");
         
         String app  ="C:\\Users\\Kinsl\\IdeaProjects\\jar-demo\\target\\jar-demo-1.0-SNAPSHOT.jar";
         

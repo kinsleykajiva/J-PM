@@ -146,6 +146,8 @@
             <arg>-Amicronaut.processing.group=africa.jopen</arg>
             <arg>-Amicronaut.processing.module=jpm</arg>
           </compilerArgs>
+            <source>22</source>
+            <target>22</target>
         </configuration>
       </plugin>
     </plugins>

@@ -48,7 +48,7 @@ public class XSystemUtils {
 		if(command.isEmpty()) {
 			return new ArrayList<>();
 		}
-		log.info("Executing command: " +command);
+		System.out.println("Executing command: " +command);
 		
 		List<String>   output         = new ArrayList<>();
 		ProcessBuilder processBuilder = new ProcessBuilder();
@@ -70,8 +70,13 @@ public class XSystemUtils {
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
 			String line;
 			while ((line = reader.readLine()) != null) {
-			//	System.out.println(line);
-				output.add(line);
+				/*
+				*I am doing this because to use regex due to some encoding response i am getting the font is really not readable
+				* on the console, so if there is another fix please do make a pull request
+				* */
+				log.info(line.replaceAll("[^a-zA-Z0-9 _\\[\\]();.,+-]", ""));
+				
+				output.add(line.trim().replaceAll("[^a-zA-Z0-9 _\\[\\]();.,+-]", ""));
 			}
 		}
 		
@@ -98,11 +103,15 @@ public class XSystemUtils {
 		return kb / 1024; // Conversion from KB to MB
 	}
 	public static String getPIDRAMUsage( String pid ) {
-		pid = pid.trim();
+		System.out.println("getPIDRAMUsage= pid ===> "+pid);
 		if(pid == null || pid.isEmpty())
 			return "--";
+		pid = pid.trim();
+		String command = "tasklist /FI \"PID eq " + pid + "\" /NH | findstr /i \"" + pid + "\"";
+		System.out.println("getPIDRAMUsage====> "+command);
+		
 		List<String>  output = bashExecute(System.getProperty("os.name").toLowerCase().startsWith("win")?
-				"tasklist /FI \"PID eq "+pid+"\" /NH | findstr /i \""+pid+"\"\n" :"ps -p "+pid+" -o rss=  ");
+				command :"ps -p "+pid+" -o rss=  ");
 		if(output.isEmpty()){
 			return "--";
 		}
@@ -113,7 +122,7 @@ public class XSystemUtils {
 				if(!line.isEmpty()){
 					int ramInKB = parseMemory(line);
 					int ramInMB = convertKBtoMB(ramInKB);
-					System.out.println("Memory Usage: " + ramInMB + " MB");
+					log.info("Memory Usage: " + ramInMB + " MB");
 					res[0] = ramInMB + " MB";
 				}
 			});
@@ -125,7 +134,7 @@ public class XSystemUtils {
 					if(line.chars().allMatch(Character::isDigit)){
 						int ramInKB = Integer.parseInt(line);
 						int ramInMB = convertKBtoMB(ramInKB);
-						System.out.println("Memory Usage: " + ramInMB + " MB");
+						log.info("Memory Usage: " + ramInMB + " MB");
 						res[0] = ramInMB + " MB";
 					}
 					

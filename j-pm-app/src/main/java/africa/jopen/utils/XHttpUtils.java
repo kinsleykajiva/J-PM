@@ -41,7 +41,7 @@ public class XHttpUtils {
 				response = client.send(request, HttpResponse.BodyHandlers.ofString());
 			}
 			//System.out.println(response.statusCode());
-			//System.out.println(response.body());
+			System.out.println(response.body());
 			return response.body();
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
@@ -67,7 +67,7 @@ public class XHttpUtils {
 					.build()) {
 				response = client.send(request, HttpResponse.BodyHandlers.ofString());
 			}
-			//System.out.println(response.statusCode());
+			System.out.println(response.body());
 			//System.out.println(response.body());
 			return response.body();
 		} catch (IOException | InterruptedException e) {
@@ -77,7 +77,10 @@ public class XHttpUtils {
 		
 		return null;
 	}
-	
+	// nssm install jxx "C:\Users\Kinsl\IdeaProjects\legalwareVersionFour\J-PM\j-pm-server\target\j-pm-server.exe"
+	// nssm set jxx AppStdout C:\Users\Kinsl\.jpm\logs\stdout.log
+	// nssm start jxx
+	// New-Service -Name "jxx" -BinaryPathName "C:\Users\Kinsl\IdeaProjects\legalwareVersionFour\J-PM\j-pm-server\target\j-pm-server.exe"
 	public static void downloadFile( String url, String saveDir ) throws IOException, InterruptedException {
 		Path               saveFilePath;
 		HttpResponse<Path> response;

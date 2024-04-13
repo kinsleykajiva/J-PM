@@ -42,6 +42,14 @@ public class XLogger {
 		}
 	}
 	
+	public String getLogFileName() {
+		return logFileName;
+	}
+	
+	public String getLogFileErrorName() {
+		return logFileErrorName;
+	}
+	
 	public synchronized void log( String message ) {
 		logToFile(logFileName, message);
 	}

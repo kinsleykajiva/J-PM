@@ -202,15 +202,17 @@ public class AppsRunnerServiceRoute implements HttpService {
 			appProcess.runApp(filePath, "");
 			Long pid = waitForProcessStart(appProcess);
 			if (pid != 0) {
-				System.out.println("xxx");
+				System.out.println("yyyyyyii9900");
 				//populateResponse(responseObj, appProcess, pid);
 				responseObj.put("app", appProcess.toJsonObject());
+				System.out.println("xxyyyyyx" + appProcess.toJsonObject());
 				appModelList.add(appProcess);
+				System.out.println("xxytttttttyyyyx"+appProcess.toJsonObject());
 			} else {
 				log.warning("Process failed to start after multiple attempts.");
 			}
 		}
-		
+		System.out.println("x777777xytttttttyyyyx");
 		sendSuccessResponse(response, "Started App " + appName + " successfully", responseObj.toString());
 	}
 	

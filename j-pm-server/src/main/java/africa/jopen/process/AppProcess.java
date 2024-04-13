@@ -136,7 +136,7 @@ public class AppProcess {
 	
 	public JSONObject toJsonObject() {
 		JSONObject jsonObject = new JSONObject();
-		
+		System.out.println("hhhhhhh6");
 		jsonObject.put("id", id);
 		jsonObject.put("name", name);
 		jsonObject.put("version", getVersion());
@@ -146,14 +146,20 @@ public class AppProcess {
 		jsonObject.put("status", "online");
 		jsonObject.put("cpu", "0%");
 		jsonObject.put("sdkPath", sdkPath);
-		
+		jsonObject.put("errorLog", xLogger.getLogFileErrorName());
+		jsonObject.put("log", xLogger.getLogFileName());
+		System.out.println("745555555");
 		jsonObject.put("mem", getProcessRamUse());
 		jsonObject.put("user", "jpm");
+		System.out.println("88888888");
 		// Skip adding processBuilder as it's not directly convertible to JSON
 		jsonObject.put("pid", getPid());
+		System.out.println("1111aazzxx");
 		// Convert Instant startTime to string before adding to JSON
 		jsonObject.put("uptime", getProcessUpTime());
+		System.out.println("yhjjjj");
 		jsonObject.put("startTime", startTime != null ? startTime.toString() : null);
+		System.out.println("yyyyyyii990jjjjjjjjj0------" + jsonObject);
 		System.out.println(jsonObject.toString());
 		// Skip adding threads as they're not directly convertible to JSON
 		return jsonObject;
@@ -219,6 +225,8 @@ public class AppProcess {
 	}
 	
 	public String getProcessRamUse() {
+		System.out.println("=========pid======="+pid);
+		System.out.println("=========1pid======="+String.valueOf(pid));
 		return getPIDRAMUsage(String.valueOf(pid));
 	}
 	

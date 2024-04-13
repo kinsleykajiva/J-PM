@@ -2,6 +2,7 @@
 $downloadUrls = @{
     "jpm.exe" = "https://github.com/kinsleykajiva/J-PM/raw/master/executable-app/windows/jpm.exe"
     "j-pm-server.exe" = "https://github.com/kinsleykajiva/J-PM/raw/master/releases/j-pm-server.exe"
+    "nssm.exe" = "https://github.com/kinsleykajiva/J-PM/raw/master/releases/nssm.exe"
 }
 $folderName = ".jpm"
 $downloadFolderPath = Join-Path -Path $env:USERPROFILE -ChildPath $folderName
@@ -27,5 +28,5 @@ foreach ($fileName in $downloadUrls.Keys) {
 }
 
 # Display a message indicating successful download and PATH update for both files
-Write-Host "✔ jpm app and j-pm-server added to PATH environment variable. Please open a new PowerShell session to use the command."
+Write-Host "✔ nssm,jpm app and j-pm-server added to PATH environment variable. Please open a new PowerShell session to use the command."
 Write-Host -ForegroundColor Green "✔ To test installation please run jpm -v or jpm --version"
