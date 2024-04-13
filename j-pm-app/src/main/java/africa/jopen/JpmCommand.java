@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -245,13 +246,14 @@ public class JpmCommand implements Runnable {
 				System.out.println("No logs found.");
 				return;
 			}
+			Consumer<String> logConsumer = line -> System.out.println(line);
 			List<Future<?>> futures = IntStream.range(0, APP_CACHE_JSONArray.length())
 					.mapToObj(APP_CACHE_JSONArray::getJSONObject)
 					.filter(app -> app.has("log"))
 					.map(app -> app.getString("log"))
 					.map(File::new)
 					.filter(File::exists)
-					.map(logFile -> executorService.submit(new LogFileStreamer(logFile.getPath(), false)))
+					.map(logFile -> executorService.submit(new LogFileStreamer(logFile.getPath(), false,logConsumer)))
 					.collect(Collectors.toList());
 			
 			futures.forEach(future -> {
@@ -280,11 +282,11 @@ public class JpmCommand implements Runnable {
 				System.out.println("No logs found.");
 				return;
 			}
-			
-			String fileLog = app.getString("log");
+			Consumer<String> logConsumer = line -> System.out.println(line);
+			String           fileLog     = app.getString("log");
 			File logFile = new File(fileLog);
 			if (logFile.exists()) {
-				new LogFileStreamer(fileLog, true).run();
+				new LogFileStreamer(fileLog, true,logConsumer).run();
 			} else {
 				System.out.println("No logs found.");
 			}

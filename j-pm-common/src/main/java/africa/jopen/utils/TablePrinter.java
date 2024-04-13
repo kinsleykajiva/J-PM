@@ -1,21 +1,13 @@
 package africa.jopen.utils;
 
 public class TablePrinter {
-	private String[] header = {"id", "name", "version", "pid", "uptime", "status", "cpu", "mem", "user"};
+	private final String[] header = {"id", "name", "version", "pid", "uptime", "status", "cpu", "mem", "user"};
 	public   TablePrinter(String[][] data) {
-		//
-		String[][] data1 = {
-				{"1", "airtime-service", "0.39.3", "892556", "6D", "online", "0%", "67.0mb", "root"},
-				{"6", "bulkemails-service", "0.39.3", "740232", "12D", "online", "0%", "66.8mb", "root"},
-				{"2", "bulksms-service", "0.39.3", "624537", "17D", "online", "0%", "66.0mb", "root"},
-				{"5", "social-media-service", "0.39.3", "1011112", "62m", "online", "0%", "64.1mb", "root"}
-		};
 		
-		// Print table
-		printTable(header, data);
+		printTable(data);
 	}
 	
-	public  void printTable(String[] header, String[][] data) {
+	public  void printTable(String[][] data) {
 		// Calculate column widths
 		int[] columnWidths = new int[header.length];
 		for (int i = 0; i < header.length; i++) {
@@ -40,7 +32,8 @@ public class TablePrinter {
 		// Print bottom border
 		printSeparator(columnWidths, "└", "┴", "┘");
 	}
-	
+	private static final String ANSI_GREEN = "\u001B[32m";
+	private static final String ANSI_RESET = "\u001B[0m";
 	public  void printRow(String[] rowData, int[] columnWidths) {
 		StringBuilder rowBuilder = new StringBuilder("│");
 		for (int i = 0; i < rowData.length; i++) {
