@@ -236,7 +236,7 @@ public class JpmCommand implements Runnable {
 		}
 		
 	}
-	final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+	final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
 	private void getLogs() {
 		System.out.println("Getting logs");
 		
@@ -292,13 +292,12 @@ public class JpmCommand implements Runnable {
 				System.out.println("No logs found.");
 				return;
 			}
-			Consumer<String> logConsumer = line -> System.out.println(line);
+			
 			String           fileLog     = app.getString("log");
 			File logFile = new File(fileLog);
 			if (logFile.exists()) {
-				//new LogFileStreamer(fileLog, true,System.out::println).run();
-				LogFileStreamer logFileStreamer = new LogFileStreamer(fileLog, true);
-				logFileStreamer.run();
+				new LogFileStreamer(fileLog, true).run();
+				
 			} else {
 				System.out.println("No logs found.");
 			}
