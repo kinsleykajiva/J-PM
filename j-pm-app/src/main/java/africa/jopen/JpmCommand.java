@@ -9,19 +9,18 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static africa.jopen.utils.XUtils.printErrorMessage;
 import static africa.jopen.utils.XUtils.printSuccessMessage;
@@ -44,6 +43,23 @@ public class JpmCommand implements Runnable {
 	String appFile;
 	
 	
+	
+	
+	private static void appendData(String filePath, boolean shouldIRun, int crunchifyRunEveryNSeconds) {
+		FileWriter fileWritter;
+		try {
+			while (shouldIRun) {
+				Thread.sleep(crunchifyRunEveryNSeconds);
+				fileWritter = new FileWriter(filePath, true);
+				BufferedWriter bufferWritter = new BufferedWriter(fileWritter);
+				String data = "\nCrunchify.log file content: " + Math.random();
+				bufferWritter.write(data);
+				bufferWritter.close();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	public static void main(String[] args) {
 		XSystemUtils.checkForSDKs();
 		Path currentDirectory = Paths.get(System.getProperty("user.dir"));
@@ -221,90 +237,61 @@ public class JpmCommand implements Runnable {
 	}
 	final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 	private void getLogs() {
-		System.out.println("Getting logs.");
+		System.out.println("Getting logs");
 		
-		///System.out.println("APP_CACHE ." + APP_CACHE);
+		//System.out.println("APP_CACHE ." + APP_CACHE);
 		if(name == null || name.isEmpty() || name.equals("all")){
-			if(APP_CACHE == null){
+			if(APP_CACHE_JSONArray == null){
 				System.out.println("No logs found.");
 				return;
 			}
-			List<Future<?>> futures = new ArrayList<>();
-			for (int i = 0; i < APP_CACHE.length(); i++) {
-				JSONObject app = APP_CACHE.getJSONObject(i);
-				if (app.has("log")) {
-					String fileLog = app.getString("log");
-					File logFile = new File(fileLog);
-					if (logFile.exists()) {
-						futures.add(executorService.submit(new LogFileStreamer(fileLog,false)));
-					}
-				}
-			}
-			for (Future<?> future : futures) {
+			List<Future<?>> futures = IntStream.range(0, APP_CACHE_JSONArray.length())
+					.mapToObj(APP_CACHE_JSONArray::getJSONObject)
+					.filter(app -> app.has("log"))
+					.map(app -> app.getString("log"))
+					.map(File::new)
+					.filter(File::exists)
+					.map(logFile -> executorService.submit(new LogFileStreamer(logFile.getPath(), false)))
+					.collect(Collectors.toList());
+			
+			futures.forEach(future -> {
 				try {
-					future.get(); // Wait for the task to complete
+					future.get();
 				} catch (Exception e) {
 					e.printStackTrace();
-					printErrorMessage(e.getMessage());
+					System.out.println("Error: " + e.getMessage());
 				}
-			}
-			/*for (int i = 0; i < APP_CACHE.length(); i++) {
-				JSONObject app = APP_CACHE.getJSONObject(i);
-				if(app.has("log")) {
-					String fileLog = app.getString("log");
-					String fileErrorLog = app.getString("errorLog");
-					if(!new File(fileLog).exists()){
-						continue;
-					}
-					LogFileStreamer logFileStreamer = new LogFileStreamer(fileLog);
-					
-					Thread thread = new Thread(logFileStreamer);
-					thread.start();
-					try {
-						thread.join();
-						// this has to finish for the next iteration to come in
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-						printErrorMessage(e.getMessage());
-					}
-					
-				}
-			}*/
-		}else{
-			System.out.println("name ." + name);
-			if(APP_CACHE == null){
-				System.out.println("No logs found.");
-				return;
-			}
-			JSONObject app = null;
-			for (int i = 0; i < APP_CACHE.length(); i++) {
-				var app_ = APP_CACHE.getJSONObject(i);
-				if(app_.getString("name").equals(name)||
-						String.valueOf(app_.getInt("id")).equals(name)){
-					app = app_;
-					break;
-				}
-			}
-			if(app == null){
+			});
+			
+		}else {
+			System.out.println("--->name " + name);
+			if (APP_CACHE_JSONArray == null) {
 				System.out.println("No logs found.");
 				return;
 			}
 			
-			if (app.has("log")) {
-				String fileLog = app.getString("log");
-				File logFile = new File(fileLog);
-				if (logFile.exists()) {
-					ExecutorService crunchifyExecutor = Executors.newFixedThreadPool(4);
-					LogFileStreamer logFileStreamer = new LogFileStreamer(fileLog,true);
-					crunchifyExecutor.execute(logFileStreamer);
-					//logFileStreamer.run();
-					/*Thread thread = new Thread(logFileStreamer);
-					thread.start();*/
-				}
+			JSONObject app = IntStream.range(0, APP_CACHE_JSONArray.length())
+					.mapToObj(APP_CACHE_JSONArray::getJSONObject)
+					.filter(a -> a.getString("name").equals(name) || String.valueOf(a.getInt("id")).equals(name))
+					.findFirst()
+					.orElse(null);
+			
+			if (app == null || !app.has("log")) {
+				System.out.println("No logs found.");
+				return;
 			}
 			
+			String fileLog = app.getString("log");
+			File logFile = new File(fileLog);
+			if (logFile.exists()) {
+				new LogFileStreamer(fileLog, true).run();
+			} else {
+				System.out.println("No logs found.");
+			}
 		}
 	}
+	
+	
 	private void reStartApp() {
 		System.out.println("reStarting..." + name);
 		String response = null;
@@ -421,7 +408,7 @@ public class JpmCommand implements Runnable {
 		data1[0] = rowData;
 		new TablePrinter(data1);
 	}
-	private JSONArray APP_CACHE;
+	private JSONArray APP_CACHE_JSONArray;
 	private void listApps() {
 		
 		String response = XHttpUtils.getRequest("");
@@ -435,7 +422,7 @@ public class JpmCommand implements Runnable {
 		if (jsonObject.getBoolean("success")) {
 			JSONArray apps = jsonObject.getJSONObject("data").getJSONArray("apps");
 			if (apps.length() > 0) {
-				APP_CACHE = apps;
+				APP_CACHE_JSONArray = apps;
 				if(allowListing) {
 					String[][] data1 = new String[apps.length()][];
 					for (int i = 0; i < apps.length(); i++) {
@@ -456,7 +443,7 @@ public class JpmCommand implements Runnable {
 					new TablePrinter(data1);
 				}
 			} else {
-				APP_CACHE = null;
+				APP_CACHE_JSONArray = null;
 				System.out.println("\u001B[31m\u2713 No apps found/Running\u001B[0m");
 			}
 		} else {
@@ -518,7 +505,7 @@ public class JpmCommand implements Runnable {
 		}
 		return false;
 	}
-	private void installApp() {
+	private void installAppx() {
 		System.out.println("Setting up app");
 		if(!XUtils.IS_RUNNING_AS_ADMINISTRATOR){
 			printErrorMessage("Please run as admin user");
@@ -548,28 +535,69 @@ public class JpmCommand implements Runnable {
 		}else{
 			
 			if(!XUtils.ifServiceExists(server)){
-				//System.out.println("KKKKKK");
 				var cratedService =XUtils.createRunAppAsService(serverFile.getAbsolutePath(),server);
 				if(!cratedService){
 					printErrorMessage("Failed to run utils as service,Please try or run shell again as Admin user");
 					return;
 				}
 				if(!XUtils.ifServiceIsRunning(server)){
-					//printErrorMessage("Service was created but failed to keep service alive");
 					XUtils.startService(server);
 					System.out.println("Service is running now");
 				}
 			}else{
-				//System.out.println("JJJJJJJ");
-				//XUtils.restartService(server);
+				
 				if(!XUtils.ifServiceIsRunning(server)){
-					//printErrorMessage("Service was created but failed to keep service alive");
 					XUtils.startService(server);
 					System.out.println("Service is running now");
 				}
 			}
 			
 			
+			printSuccessMessage("Service running");
+		}
+	}
+	
+	private void installApp() {
+		System.out.println("Setting up app");
+		if (!XUtils.IS_RUNNING_AS_ADMINISTRATOR) {
+			printErrorMessage("Please run as admin user");
+			return;
+		}
+		
+		String appFolderPath = XFilesUtils.getAppFolderPath();
+		XFilesUtils.getCacheFile();
+		String server = "j-pm-server";
+		String serverFileName = server + ".exe";
+		Path serverFilePath = Paths.get(appFolderPath, serverFileName);
+		
+		boolean isServiceRunning = XUtils.ifServiceExists(server) && XUtils.ifServiceIsRunning(server);
+		
+		if (Files.notExists(serverFilePath) || !isServiceRunning) {
+			if (Files.notExists(serverFilePath)) {
+				boolean wasSuccessful = downloadServerUtil(serverFileName);
+				if (!wasSuccessful) {
+					printErrorMessage("Failed to download server utility");
+					return;
+				}
+			}
+			
+			if (!XUtils.ifServiceExists(server)) {
+				boolean cratedService = XUtils.createRunAppAsService(serverFilePath.toString(), server);
+				if (!cratedService) {
+					printErrorMessage("Failed to run utils as service, Please try or run shell again as Admin user");
+					return;
+				}
+			}
+			
+			if (!XUtils.ifServiceIsRunning(server)) {
+				XUtils.startService(server);
+				if (!XUtils.ifServiceIsRunning(server)) {
+					printErrorMessage("Service was created but failed to keep service alive");
+					return;
+				}
+			}
+		}
+		if (XUtils.ifServiceIsRunning(server)) {
 			printSuccessMessage("Service running");
 		}
 	}

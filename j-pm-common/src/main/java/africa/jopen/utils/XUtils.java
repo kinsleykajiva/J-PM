@@ -1,5 +1,6 @@
 package africa.jopen.utils;
 
+import java.io.File;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -256,6 +257,8 @@ Service "j-pm-server" removed successfully!*/
 				return true;
 			}
 			var cmdDescription = "nssm set " + serviceName + " Description \"JPM background service\"";
+			var logsFolder =XFilesUtils.getAppFolderPath() + "logs" + File.separator+serviceName+"_stdout.log";
+			var cmdLoggs = "nssm set " + serviceName + "  AppStdout " + logsFolder;
 			
 			List<String> result = XSystemUtils.bashExecute("nssm install " + serviceName + "  \"" + filePath + "\"");
 			for (String line : result) {
@@ -270,6 +273,7 @@ Service "j-pm-server" removed successfully!*/
 				}
 				if (line.contains(" installed successfully")) {
 					XSystemUtils.bashExecute(cmdDescription);
+					XSystemUtils.bashExecute(cmdLoggs);
 					/*nssm set j-pm-server Description "Description for your service goes here"
 						Set parameter "Description" for service "j-pm-server".*/
 					return true;
